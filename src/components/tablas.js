@@ -17,7 +17,7 @@ export function tabla(titulo, filas, situacionDe = () => 'neutro', { desde = 1, 
           ${vis.map(({ e, pos }) => `
           <tr class="sit--${situacionDe(pos, e)} ${cortes.includes(pos) ? 'fila-corte' : ''}">
             <td class="num"><span class="pos-box">${pos}</span></td>
-            <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
+            <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>${extra ? extra.map((x) => `<td class="num num--sec ${x.opc ? 'col-opc' : ''}">${x.td(e)}</td>`).join('') : ''}
           </tr>`).join('')}

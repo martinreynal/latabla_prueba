@@ -36,7 +36,7 @@ function tabla(titulo, zona, desde = 1, hasta = zona.length) {
             return `
           <tr class="sit--${s} ${corte ? 'fila-corte' : ''}">
             <td class="num"><span class="pos-box">${pos}</span></td>
-            <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></td>
+            <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>
           </tr>`;

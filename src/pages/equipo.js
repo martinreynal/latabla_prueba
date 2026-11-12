@@ -1,6 +1,7 @@
 import { buscarEquipo, fichaEquipo } from '../lib/equipos.js';
 import { icon } from '../lib/icons.js';
 import { equipoVivo, haceCuanto } from '../lib/vivo.js';
+import { ANUAL_REAL, PRIMERA_REAL } from '../data/primera-real.js';
 
 const TORNEO_VIVO = {
   primera: { cat: 'Primera División', nombre: 'Liga Profesional · Clausura 2026', ruta: '/tablas/primera' },
@@ -11,14 +12,14 @@ const TORNEO_VIVO = {
 function perfilReal(v) {
   const t = TORNEO_VIVO[v.torneo];
   const f = v.fila;
-  const zona = v.zona === 'U' ? 'Tabla general' : `Zona ${v.zona}`;
+  const zona = v.zona === 'U' ? 'Tabla general' : v.zona === 'anual' ? 'Tabla anual' : `Zona ${v.zona}`;
   const dato = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
   return {
     titulo: `${f.nombre} · Latabla`,
     html: `
     <section class="perfil">
       <a href="${t.ruta}" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
-      <p class="estado-datos"><span class="punto-vivo"></span>En vivo · ESPN · ${haceCuanto(v.actualizado)}</p>
+      <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
       <header class="perfil__cab">
         <div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>
         <div class="perfil__id">
@@ -40,7 +41,11 @@ const iniciales = (n) => n.replace(/^(Equipo|Club) /, '').split(/\s+/).map((w) =
 
 export function equipo(id) {
   if (id.startsWith('espn-')) {
-    const v = equipoVivo(id);
+    let v = equipoVivo(id);
+    if (!v) {
+      const i = ANUAL_REAL.findIndex((e) => e.id === id);
+      if (i >= 0) v = { torneo: 'primera', zona: 'anual', fila: ANUAL_REAL[i], pos: i + 1, total: ANUAL_REAL.length, actualizado: null };
+    }
     return v ? perfilReal(v) : null;
   }
   const eq = buscarEquipo(id);

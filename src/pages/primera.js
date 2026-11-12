@@ -1,4 +1,5 @@
 import { tablaZona as tablaCargada } from '../lib/resultados.js';
+import { PRIMERA_REAL, ANUAL_REAL, PROMEDIOS_REAL } from '../data/primera-real.js';
 import { PRIMERA_EJEMPLO as D } from '../data/primera-ejemplo.js';
 import { REGLAS, ordenarZona, ordenarAnual, ordenarPromedios, estadosCopas, crucesOctavos } from '../lib/reglas-primera.js';
 import { abrirMenu } from '../components/menu.js';
@@ -7,6 +8,15 @@ import { icon } from '../lib/icons.js';
 const SIGLA = { lib: 'LIB', sud: 'SUD', 'desc-anual': 'DESC', 'desc-prom': 'PROM' };
 
 let vista = 'posiciones';
+
+// Promedio con 3 decimales; en el empate exacto redondea al par (52/64 = 0,8125 → 0,812), como la tabla oficial.
+function formatoProm(pts, pj) {
+  const milesimas = (pts * 1000) / pj;
+  const base = Math.floor(milesimas);
+  const resto = pts * 1000 - base * pj; // exacto, en enteros
+  const redondeado = resto * 2 > pj || (resto * 2 === pj && base % 2 === 1) ? base + 1 : base;
+  return (redondeado / 1000).toFixed(3);
+}
 
 function marca(estado) {
   return estado ? `<span class="marca marca--${estado.tipo}" title="${estado.detalle}">${SIGLA[estado.tipo]}</span>` : '';
@@ -23,7 +33,7 @@ function tablaZona(titulo, filas, estados) {
           ${filas.map((e, i) => `
           <tr class="${i < REGLAS.clasificanPorZona ? 'fila-clasifica' : ''} ${i === REGLAS.clasificanPorZona - 1 ? 'fila-corte' : ''} ${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(estados[e.id])}</td>
+            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
@@ -36,7 +46,7 @@ function tablaZona(titulo, filas, estados) {
 function tablaAnual(filas, estados) {
   return `
   <div class="placa-tabla">
-    <h2 class="placa-tabla__titulo">Tabla anual</h2>
+    <h2 class="placa-tabla__titulo">Tabla anual <span class="fuente fuente--real">Al ${PRIMERA_REAL.actualizado}</span></h2>
     <div class="tabla-scroll">
       <table class="tabla tabla--compacta">
         <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th></tr></thead>
@@ -44,7 +54,7 @@ function tablaAnual(filas, estados) {
           ${filas.map((e, i) => `
           <tr class="${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(estados[e.id])}</td>
+            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
@@ -89,7 +99,7 @@ function cruces(zA, zB) {
 function promediosHtml(prom, estados) {
   return `
   <div class="placa-tabla placa-tabla--ancha">
-    <h2 class="placa-tabla__titulo">Tabla de promedios</h2>
+    <h2 class="placa-tabla__titulo">Tabla de promedios <span class="fuente fuente--real">Al ${PRIMERA_REAL.actualizado}</span></h2>
     <div class="tabla-scroll">
       <table class="tabla tabla--compacta">
         <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th><th class="num">Prom</th></tr></thead>
@@ -99,10 +109,10 @@ function promediosHtml(prom, estados) {
             return `
           <tr class="${est ? 'fila--desc-prom' : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(est)}</td>
+            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(est)}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num num--sec">${e.pts}</td>
-            <td class="num">${e.prom.toFixed(3)}</td>
+            <td class="num">${formatoProm(e.pts, e.pj)}</td>
           </tr>`;
           }).join('')}
         </tbody>
@@ -115,9 +125,9 @@ function contenido() {
   const cA = tablaCargada('primera', 'A', D.zonaA), cB = tablaCargada('primera', 'B', D.zonaB);
   const zA = ordenarZona(cA.filas);
   const zB = ordenarZona(cB.filas);
-  const anual = ordenarAnual(D.anual);
-  const prom = ordenarPromedios(D.promedios);
-  const estados = estadosCopas(anual, prom, D.clasificadosPorTitulo);
+  const anual = ordenarAnual(ANUAL_REAL);
+  const prom = ordenarPromedios(PROMEDIOS_REAL);
+  const estados = estadosCopas(anual, prom, PRIMERA_REAL.clasificadosPorTitulo);
 
   if (vista === 'promedios') return `${promediosHtml(prom, estados)}${referencias()}`;
   return `
@@ -137,8 +147,8 @@ function fechaActual() {
 
 function encabezadoDatos() {
   const c = tablaCargada('primera', 'A', D.zonaA);
-  if (!c.real) return '<p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo</p>';
-  return `<p class="estado-datos"><span class="punto-vivo"></span>Zonas ${c.vivo ? 'en vivo (ESPN)' : 'cargadas a mano'} · tabla anual y promedios de ejemplo</p>`;
+  if (!c.real) return `<p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Zonas de ejemplo · tabla anual y promedios al ${PRIMERA_REAL.actualizado}</p>`;
+  return `<p class="estado-datos"><span class="punto-vivo"></span>Zonas ${c.vivo ? 'en vivo (ESPN)' : 'cargadas a mano'} · tabla anual y promedios al ${PRIMERA_REAL.actualizado}</p>`;
 }
 
 export function primera() {
