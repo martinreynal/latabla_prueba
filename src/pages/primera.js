@@ -134,15 +134,26 @@ function contenido() {
     ${cruces(zA, zB)}`;
 }
 
+function fechaActual() {
+  const c = tablaCargada('primera', 'A', D.zonaA);
+  return c.real ? Math.max(...c.filas.map((e) => e.pj)) : D.fecha;
+}
+
+function encabezadoDatos() {
+  const c = tablaCargada('primera', 'A', D.zonaA);
+  if (!c.real) return '<p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo</p>';
+  return `<p class="estado-datos"><span class="punto-vivo"></span>Zonas ${c.vivo ? 'en vivo (ESPN)' : 'cargadas a mano'} · tabla anual y promedios de ejemplo</p>`;
+}
+
 export function primera() {
   return {
     titulo: 'Primera División · Latabla',
     html: `
     <section class="tabla-pag tabla-pag--primera">
       <div class="tabla-pag__cab">
-        <p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo</p>
+        ${encabezadoDatos()}
         <h1 class="titulo-grande">Primera División</h1>
-        <p class="tabla-pag__torneo">Liga Profesional · ${D.torneo}, fecha ${D.fecha}</p>
+        <p class="tabla-pag__torneo">Liga Profesional · ${D.torneo}, fecha ${fechaActual()}</p>
         <button type="button" class="btn-categoria" id="btn-categoria">${icon('menu', 18)}Cambiar categoría</button>
       </div>
       <div class="pestanas" role="tablist" aria-label="Vista">
