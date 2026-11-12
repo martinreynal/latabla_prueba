@@ -89,7 +89,9 @@ for (const [slug, nota] of orden) {
     const clave = [p.tipo, fase, p.cat, ...[l.id, v.id].sort()].join('|');
     const previo = unicos.get(clave);
     if (previo && p.gl === null && previo.gl !== null) continue; // no pisar un resultado con uno vacío
-    unicos.set(clave, { tipo: p.tipo, fase, cat: p.cat, fecha: p.fecha ?? previo?.fecha ?? null, dia: p.dia, l: l.id, v: v.id, gl: p.gl, gv: p.gv, slug });
+    const num = typeof p.fecha === 'number' ? p.fecha : (previo?.fecha ?? null);
+    const inter = p.fecha === 'interzonal' || Boolean(previo?.inter);
+    unicos.set(clave, { tipo: p.tipo, fase, cat: p.cat, fecha: num, inter, dia: p.dia, l: l.id, v: v.id, gl: p.gl, gv: p.gv, slug });
   }
 }
 
@@ -110,7 +112,7 @@ function componentes(partidos) {
   return { grupo, n };
 }
 function zonas(partidos) {
-  let base = partidos.filter((p) => p.fecha !== 'interzonal');
+  const base = partidos.filter((p) => !p.inter);
   let { grupo, n } = componentes(base);
   if (n === 1) {
     // Hay una fecha interzonal sin marcar en el título: la que, al sacarla, deja dos zonas del mismo tamaño.
@@ -119,24 +121,29 @@ function zonas(partidos) {
       const prueba = componentes(base.filter((p) => p.fecha !== f));
       const tam = Object.values(prueba.grupo).reduce((m, g) => ((m[g] = (m[g] ?? 0) + 1), m), {});
       if (prueba.n === 2 && tam[0] === tam[1]) {
-        partidos.filter((p) => p.fecha === f).forEach((p) => { p.interzonal = true; });
+        partidos.filter((p) => p.fecha === f).forEach((p) => { p.inter = true; });
         ({ grupo, n } = prueba);
         break;
       }
     }
   }
-  partidos.filter((p) => p.fecha === 'interzonal').forEach((p) => { p.interzonal = true; });
   if (n !== 2) return null; // formato desconocido: el sitio muestra una tabla única
   return Object.fromEntries(Object.entries(grupo).map(([id, g]) => [id, 'AB'[g]]));
 }
 
-const comp = (p) => [p.interzonal ? 'interzonal' : p.fecha, p.dia, p.l, p.v, p.gl, p.gv];
+const comp = (p) => [p.inter ? 'interzonal' : p.fecha, p.dia, p.l, p.v, p.gl, p.gv];
+// Número de fecha que ocupó la interzonal (el más repetido entre sus partidos).
+const numeroInterzonal = (ps) => {
+  const c = {};
+  ps.filter((p) => p.inter && typeof p.fecha === 'number').forEach((p) => { c[p.fecha] = (c[p.fecha] ?? 0) + 1; });
+  return +Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+};
 const todos = [...unicos.values()];
 const out = { actualizado: hoy.toISOString(), fuente: 'afa.com.ar', clubes: CLUBES_LPF, reserva: {}, juveniles: {}, sinIdentificar: [...sinIdentificar].sort() };
 for (const fase of ['apertura', 'clausura']) {
   const ps = todos.filter((p) => p.tipo === 'reserva' && p.fase === fase).sort((a, b) => a.dia.localeCompare(b.dia));
   const z = zonas(ps);
-  out.reserva[fase] = { zonas: z, partidos: ps.map(comp) };
+  out.reserva[fase] = { zonas: z, fechaInterzonal: numeroInterzonal(ps), partidos: ps.map(comp) };
 }
 for (const cat of ['cuarta', 'quinta', 'sexta', 'septima', 'octava', 'novena']) {
   out.juveniles[cat] = todos.filter((p) => p.tipo === 'juv-lpf' && p.cat === cat).sort((a, b) => a.dia.localeCompare(b.dia)).map(comp);

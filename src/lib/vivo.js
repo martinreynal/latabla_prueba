@@ -30,5 +30,8 @@ export function equipoVivo(id) {
 
 export function haceCuanto(iso) {
   const min = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
-  return min < 1 ? 'recién' : min < 60 ? `hace ${min} min` : `hace ${Math.round(min / 60)} h`;
+  if (min < 1) return 'recién';
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  return h < 24 ? `hace ${h} h` : `hace ${Math.round(h / 24)} ${Math.round(h / 24) === 1 ? 'día' : 'días'}`;
 }
