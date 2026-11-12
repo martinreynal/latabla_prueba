@@ -1,0 +1,28 @@
+name: Explorar imágenes AFA
+on:
+  push:
+    branches: [main]
+    paths: [scripts/afa/explorar-imagenes.mjs, .github/workflows/afa-imagenes-explorar.yml]
+permissions:
+  contents: write
+concurrency: afa
+jobs:
+  explorar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-spa > /dev/null
+      - run: node scripts/afa/explorar-imagenes.mjs
+      - name: OCR de prueba
+        run: |
+          for f in explorar-img/*.jpg explorar-img/*.jpeg explorar-img/*.png; do
+            [ -f "$f" ] || continue
+            tesseract "$f" "${f%.*}" -l spa --psm 6 2>/dev/null
+          done
+          du -sh explorar-img
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add explorar-img && git commit -qm "Exploración de imágenes AFA" && git pull --rebase -q && git push
