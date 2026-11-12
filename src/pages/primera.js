@@ -18,14 +18,13 @@ function tablaZona(titulo, filas, estados) {
     <h2 class="placa-tabla__titulo">${titulo}</h2>
     <div class="tabla-scroll">
       <table class="tabla tabla--compacta">
-        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th></tr></thead>
+        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th></tr></thead>
         <tbody>
           ${filas.map((e, i) => `
           <tr class="${i < REGLAS.clasificanPorZona ? 'fila-clasifica' : ''} ${i === REGLAS.clasificanPorZona - 1 ? 'fila-corte' : ''} ${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
             <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(estados[e.id])}</td>
             <td class="num num--sec">${e.pj}</td>
-            <td class="num num--sec">${e.dg > 0 ? '+' : ''}${e.dg}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
         </tbody>
@@ -40,14 +39,13 @@ function tablaAnual(filas, estados) {
     <h2 class="placa-tabla__titulo">Tabla anual</h2>
     <div class="tabla-scroll">
       <table class="tabla tabla--compacta">
-        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th></tr></thead>
+        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th></tr></thead>
         <tbody>
           ${filas.map((e, i) => `
           <tr class="${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
             <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(estados[e.id])}</td>
             <td class="num num--sec">${e.pj}</td>
-            <td class="num num--sec">${e.dg > 0 ? '+' : ''}${e.dg}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
         </tbody>
@@ -94,7 +92,7 @@ function promediosHtml(prom, estados) {
     <h2 class="placa-tabla__titulo">Tabla de promedios</h2>
     <div class="tabla-scroll">
       <table class="tabla tabla--compacta">
-        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">2024</th><th class="num">2025</th><th class="num">2026</th><th class="num">PJ</th><th class="num">Prom</th></tr></thead>
+        <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th><th class="num">Prom</th></tr></thead>
         <tbody>
           ${prom.map((e, i) => {
             const est = estados[e.id]?.tipo === 'desc-prom' ? estados[e.id] : null;
@@ -102,10 +100,8 @@ function promediosHtml(prom, estados) {
           <tr class="${est ? 'fila--desc-prom' : ''}">
             <td class="num">${i + 1}</td>
             <td class="equipo"><span><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span>${marca(est)}</td>
-            <td class="num num--sec">${e.t2024}</td>
-            <td class="num num--sec">${e.t2025}</td>
-            <td class="num num--sec">${e.t2026}</td>
             <td class="num num--sec">${e.pj}</td>
+            <td class="num num--sec">${e.pts}</td>
             <td class="num">${e.prom.toFixed(3)}</td>
           </tr>`;
           }).join('')}

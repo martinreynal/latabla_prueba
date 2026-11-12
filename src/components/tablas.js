@@ -11,8 +11,7 @@ export function tabla(titulo, filas, situacionDe = () => 'neutro', { desde = 1, 
       <table class="tabla tabla--compacta tabla--nacional">
         <thead><tr>
           <th class="num">#</th><th>Equipo</th><th class="num">PJ</th>
-          ${compacta ? '' : '<th class="num col-opc">G</th><th class="num col-opc">E</th><th class="num col-opc">P</th>'}
-          ${goles ? '<th class="num col-opc">GF</th><th class="num col-opc">GC</th>' : ''}<th class="num">DG</th><th class="num">Pts</th>${extra ? extra.map((x) => `<th class="num ${x.opc ? 'col-opc' : ''}">${x.th}</th>`).join('') : ''}
+          <th class="num">Pts</th>${extra ? extra.map((x) => `<th class="num ${x.opc ? 'col-opc' : ''}">${x.th}</th>`).join('') : ''}
         </tr></thead>
         <tbody>
           ${vis.map(({ e, pos }) => `
@@ -20,8 +19,6 @@ export function tabla(titulo, filas, situacionDe = () => 'neutro', { desde = 1, 
             <td class="num"><span class="pos-box">${pos}</span></td>
             <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
             <td class="num num--sec">${e.pj}</td>
-            ${compacta ? '' : `<td class="num num--sec col-opc">${e.pg}</td><td class="num num--sec col-opc">${e.pe}</td><td class="num num--sec col-opc">${e.pp}</td>`}
-            ${goles ? `<td class="num num--sec col-opc">${e.gf}</td><td class="num num--sec col-opc">${e.gc}</td>` : ''}<td class="num num--sec">${signo(e.dg)}</td>
             <td class="num">${e.pts}</td>${extra ? extra.map((x) => `<td class="num num--sec ${x.opc ? 'col-opc' : ''}">${x.td(e)}</td>`).join('') : ''}
           </tr>`).join('')}
         </tbody>

@@ -29,7 +29,7 @@ function acumulada() {
   return `
     <p class="formato-resumen"><strong>Tabla General de Inferiores.</strong> Suma los puntos de cada club en las seis categorías juveniles, de Cuarta a Novena. Muestra qué institución tiene el trabajo de base más parejo. La Reserva no suma. Tocá un club para ver cómo se compone su total.</p>
     <div class="gen">
-      <div class="gen__cab" aria-hidden="true"><span>#</span><span>Club</span>${JUV.map((c) => `<span class="gen__c col-opc">${NOMBRE[c].slice(0, 3)}</span>`).join('')}<span class="gen__tot">Pts</span></div>
+      <div class="gen__cab" aria-hidden="true"><span>#</span><span>Club</span><span class="gen__c">PJ</span><span class="gen__tot">Pts</span></div>
       ${filas.map((f, i) => {
         const on = abierto === f.nombre;
         return `
@@ -37,7 +37,7 @@ function acumulada() {
           <button type="button" class="gen__btn" data-club="${f.nombre}" aria-expanded="${on}">
             <span class="pos-box">${i + 1}</span>
             <span class="gen__nombre">${f.nombre}</span>
-            ${JUV.map((c) => `<span class="gen__c col-opc">${f.porCat[c]}</span>`).join('')}
+            <span class="gen__c">${f.pj}</span>
             <span class="gen__tot">${f.pts}</span>
           </button>
           ${on ? `

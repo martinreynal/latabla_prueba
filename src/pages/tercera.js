@@ -23,8 +23,7 @@ function tabla(titulo, filas, situacionDe, { desde = 1, hasta = filas.length, co
       <table class="tabla tabla--compacta tabla--nacional">
         <thead><tr>
           <th class="num">#</th><th>Equipo</th><th class="num">PJ</th>
-          <th class="num col-opc">G</th><th class="num col-opc">E</th><th class="num col-opc">P</th>
-          <th class="num">DG</th><th class="num">Pts</th>${extra ? `<th class="num">${extra.th}</th>` : ''}
+          <th class="num">Pts</th>${extra ? `<th class="num">${extra.th}</th>` : ''}
         </tr></thead>
         <tbody>
           ${vis.map(({ e, pos }) => `
@@ -32,10 +31,6 @@ function tabla(titulo, filas, situacionDe, { desde = 1, hasta = filas.length, co
             <td class="num"><span class="pos-box">${pos}</span></td>
             <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
             <td class="num num--sec">${e.pj}</td>
-            <td class="num num--sec col-opc">${e.pg}</td>
-            <td class="num num--sec col-opc">${e.pe}</td>
-            <td class="num num--sec col-opc">${e.pp}</td>
-            <td class="num num--sec">${signo(e.dg)}</td>
             <td class="num">${e.pts}</td>${extra ? `<td class="num num--sec">${extra.td(e)}</td>` : ''}
           </tr>`).join('')}
         </tbody>

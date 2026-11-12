@@ -50,7 +50,6 @@ function resolver(path) {
   if (path === '/admin') return admin();
   if ((m = path.match(/^\/equipo\/([\w-]+)$/))) return equipo(m[1]);
   if ((m = path.match(/^\/juegos\/([\w-]+)$/))) return juego(m[1], navegar);
-  if (path === '/rachas') return simple('Mis rachas', 'Cuando creemos las cuentas, acá vas a ver tus rachas y tu historial.');
   if (path === '/como-se-juega') return simple('Cómo se juega', 'Cada día hay un desafío nuevo en cada juego. Resolvelos y compartí tu tabla.');
   return null;
 }

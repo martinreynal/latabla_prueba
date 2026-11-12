@@ -13,7 +13,6 @@ export function tabla(slug) {
       <td><span class="skeleton" style="width:${55 + ((i * 37) % 35)}%"></span></td>
       <td class="num"><span class="skeleton skeleton--corto"></span></td>
       <td class="num"><span class="skeleton skeleton--corto"></span></td>
-      <td class="num"><span class="skeleton skeleton--corto"></span></td>
     </tr>`).join('');
 
   return {
@@ -34,7 +33,7 @@ export function tabla(slug) {
       <p class="aviso">Las posiciones aparecen acá cuando conectemos el proveedor de datos en vivo.</p>
       <div class="tabla-scroll">
         <table class="tabla">
-          <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">DG</th><th class="num">Pts</th></tr></thead>
+          <thead><tr><th class="num">#</th><th>Equipo</th><th class="num">PJ</th><th class="num">Pts</th></tr></thead>
           <tbody>${filas}</tbody>
         </table>
       </div>
