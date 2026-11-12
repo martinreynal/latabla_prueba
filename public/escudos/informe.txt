@@ -1,0 +1,125 @@
+ok   espn-5 Boca Juniors
+ok   espn-8 Estudiantes de La Plata
+ok   espn-11 Independiente
+ok   espn-12 Lanús
+ok   espn-14 Newell's Old Boys
+ok   espn-18 San Lorenzo
+ok   espn-19 Talleres (Córdoba)
+ok   espn-20 Unión (Santa Fe)
+ok   espn-21 Vélez Sarsfield
+ok   espn-2975 Instituto (Córdoba)
+ok   espn-7764 Platense
+ok   espn-8950 Defensa y Justicia
+ok   espn-11972 Gimnasia (Mendoza)
+ok   espn-11989 Central Córdoba (Santiago del Estero)
+ok   espn-17702 Deportivo Riestra
+ok   espn-3 Argentinos Juniors
+ok   espn-4 Belgrano (Córdoba)
+ok   espn-9 Gimnasia La Plata
+ok   espn-10 Huracán
+ok   espn-15 Racing Club
+ok   espn-16 River Plate
+ok   espn-17 Rosario Central
+ok   espn-235 Banfield
+ok   espn-7767 Tigre
+ok   espn-9739 Aldosivi
+ok   espn-9744 Independiente Rivadavia
+ok   espn-9785 Atlético Tucumán
+ok   espn-10060 Barracas Central
+ok   espn-10158 Sarmiento (Junín)
+ok   espn-19685 Estudiantes de Río Cuarto
+ok   espn-7 Colón (Santa Fe)
+ok   espn-13 Los Andes
+ok   espn-6756 Godoy Cruz Antonio Tomba
+ok   espn-9740 Almirante Brown
+ok   espn-9743 Ferro Carril Oeste
+ok   espn-9786 All Boys
+ok   espn-10058 San Miguel
+ok   espn-10145 Acassuso
+ok   espn-10151 Defensores de Belgrano
+ok   espn-10154 Deportivo Morón
+ok   espn-10157 San Telmo
+ok   espn-11963 Chaco For Ever
+ok   espn-11990 Mitre (Santiago del Estero)
+ok   espn-11993 Central Norte
+ok   espn-17352 Estudiantes (Buenos Aires)
+ok   espn-18260 Deportivo Madryn
+ok   espn-19145 Racing (Córdoba)
+ok   espn-21799 Ciudad de Bolívar
+ok   espn-2 Almagro
+ok   espn-6 Chacarita Juniors
+ok   espn-236 Nueva Chicago
+ok   espn-2741 Quilmes
+ok   espn-5263 Gimnasia y Esgrima (Jujuy)
+ok   espn-7845 San Martín (San Juan)
+ok   espn-9747 Atletico Rafaela
+ok   espn-10109 Midland
+ok   espn-10146 Atlanta
+ok   espn-10149 Colegiales
+ok   espn-10162 Temperley
+ok   espn-10163 Tristán Suárez
+ok   espn-10374 Patronato
+ok   espn-10743 Gimnasia y Tiro (Salta)
+ok   espn-11978 Deportivo Maipú
+ok   espn-13913 Agropecuario
+ok   espn-17814 San Martín (Tucumán)
+ok   espn-18284 Güemes
+ok   espn-10054 Excursionistas
+ok   espn-2635 Arsenal Sarandi
+ok   espn-17703 Sportivo Italiano
+ok   espn-10161 Talleres de Remedios
+ok   espn-18662 Camioneros
+ok   espn-10064 Villa Dálmine
+ok   espn-18844 Real Pilar
+ok   espn-10152 Deportivo Armenio
+ok   espn-14074 Comunicaciones
+ok   espn-17695 Deportivo Laferrere
+ok   espn-10052 Villa San Carlos
+ok   espn-17692 San Martín (Burzaco)
+ok   espn-17700 Argentino de Merlo
+ok   espn-10156 Flandria
+ok   espn-17704 Deportivo Merlo
+ok   espn-10107 Liniers
+ok   espn-17693 Argentino de Quilmes
+ok   espn-10103 Dock Sud
+ok   espn-17697 Defensores Unidos
+ok   espn-10147 Brown de Adrogué
+ok   espn-17705 UAI Urquiza
+ok   espn-10105 Ituzaingó
+ok   fed-douglas-haig Douglas Haig ← Douglas Haig (Argentina Torneo Federal A)
+ok   fed-sportivo-belgrano Sportivo Belgrano ← Sportivo Belgrano (Argentina Torneo Federal A)
+ok   fed-gimnasia-y-esgrima-chivilcoy Gimnasia y Esgrima (Chivilcoy) ← Gimnasia y Esgrima de Chivilcoy (Argentina Torneo Federal A)
+ok   fed-defensores-de-belgrano-vr Defensores de Belgrano (VR) ← Defensores de Belgrano de Villa Ramallo (Argentina Torneo Federal A)
+ok   fed-9-de-julio-rafaela 9 de Julio (Rafaela) ← 9 de Julio de Rafaela (Argentina Torneo Federal A)
+ok   fed-sportivo-las-parejas Sportivo Las Parejas ← Sportivo Las Parejas (Argentina Torneo Federal A)
+ok   fed-atletico-escobar Atlético Escobar ← Atlético Escobar (Argentina Torneo Federal A)
+ok   fed-independiente-chivilcoy Independiente (Chivilcoy) ← Independiente de Chivilcoy (Argentina Torneo Federal A)
+ok   fed-el-linqueno El Linqueño ← El Linqueño (Argentina Torneo Federal A)
+ok   fed-gimnasia-de-concepcion Gimnasia de Concepción ← Gimnasia y Esgrima de Concepción del Uruguay (Argentina Torneo Federal A)
+ok   fed-san-martin-formosa San Martín (Formosa) ← San Martín de Formosa (Argentina Torneo Federal A)
+FALTA fed-bartolome-mitre-posadas Bartolomé Mitre (Posadas)
+FALTA fed-sol-de-america Sol de América
+FALTA fed-sarmiento-la-banda Sarmiento (La Banda)
+FALTA fed-juventud-antoniana Juventud Antoniana
+FALTA fed-defensores-pto-vilelas Defensores (Pto. Vilelas)
+FALTA fed-boca-unidos-corrientes Boca Unidos (Corrientes)
+FALTA fed-tucuman-central Tucumán Central
+FALTA fed-sarmiento-resistencia Sarmiento (Resistencia)
+FALTA fed-cipolletti Cipolletti
+FALTA fed-argentino-monte-maiz Argentino (Monte Maíz)
+FALTA fed-atenas-rio-cuarto Atenas (Río Cuarto)
+FALTA fed-huracan-las-heras Huracán (Las Heras)
+FALTA fed-fundacion-amigos-por-el-deporte Fundación Amigos por el Deporte
+FALTA fed-deportivo-rincon Deportivo Rincón
+FALTA fed-san-martin-mendoza San Martín (Mendoza)
+FALTA fed-costa-brava-general-pico Costa Brava (General Pico)
+FALTA fed-juventud-unida-san-luis Juventud Unida (San Luis)
+FALTA fed-olimpo Olimpo
+FALTA fed-alvarado Alvarado
+FALTA fed-kimberley-mar-del-plata Kimberley (Mar del Plata)
+FALTA fed-villa-mitre Villa Mitre
+FALTA fed-germinal Germinal
+FALTA fed-sol-de-mayo Sol de Mayo
+FALTA fed-guillermo-brown Guillermo Brown
+FALTA fed-santamarina Santamarina
+FALTA fed-circulo-deportivo Círculo Deportivo
