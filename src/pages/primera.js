@@ -1,3 +1,4 @@
+import { escudoMini } from '../lib/escudos.js';
 import { tablaZona as tablaCargada } from '../lib/resultados.js';
 import { PRIMERA_REAL, ANUAL_REAL, PROMEDIOS_REAL } from '../data/primera-real.js';
 import { PRIMERA_EJEMPLO as D } from '../data/primera-ejemplo.js';
@@ -33,7 +34,7 @@ function tablaZona(titulo, filas, estados) {
           ${filas.map((e, i) => `
           <tr class="${i < REGLAS.clasificanPorZona ? 'fila-clasifica' : ''} ${i === REGLAS.clasificanPorZona - 1 ? 'fila-corte' : ''} ${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
+            <td class="equipo"><span class="eq-celda">${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
@@ -54,7 +55,7 @@ function tablaAnual(filas, estados) {
           ${filas.map((e, i) => `
           <tr class="${estados[e.id] ? 'fila--' + estados[e.id].tipo : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
+            <td class="equipo"><span class="eq-celda">${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(estados[e.id])}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>
           </tr>`).join('')}
@@ -109,7 +110,7 @@ function promediosHtml(prom, estados) {
             return `
           <tr class="${est ? 'fila--desc-prom' : ''}">
             <td class="num">${i + 1}</td>
-            <td class="equipo"><span class="eq-celda"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(est)}</span></td>
+            <td class="equipo"><span class="eq-celda">${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${marca(est)}</span></td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num num--sec">${e.pts}</td>
             <td class="num">${formatoProm(e.pts, e.pj)}</td>

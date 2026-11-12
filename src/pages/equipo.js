@@ -1,3 +1,4 @@
+import { urlEscudo } from '../lib/escudos.js';
 import { buscarEquipo, fichaEquipo } from '../lib/equipos.js';
 import { icon } from '../lib/icons.js';
 import { equipoVivo, haceCuanto } from '../lib/vivo.js';
@@ -23,7 +24,7 @@ function perfilReal(v) {
       <a href="${t.ruta}" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
       <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : v.torneo === 'federal' ? `Datos reales · cargados al ${FEDERAL_ACTUALIZADO}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
       <header class="perfil__cab">
-        <div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>
+        ${urlEscudo(f.id) ? `<div class="perfil__escudo perfil__escudo--img"><img src="${urlEscudo(f.id)}" alt="Escudo de ${f.nombre}" width="96" height="96"></div>` : `<div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>`}
         <div class="perfil__id">
           <span class="perfil__cat">${t.cat}</span>
           <h1 class="titulo-grande perfil__nombre">${f.nombre}</h1>

@@ -1,3 +1,4 @@
+import { escudoMini } from '../lib/escudos.js';
 import { tablaZona as tablaCargada } from '../lib/resultados.js';
 import { BMETRO_EJEMPLO as BM } from '../data/tercera-ejemplo.js';
 import { ordenar, federalReal, recorridoReal } from '../lib/reglas-federal.js';
@@ -32,7 +33,7 @@ function tabla(titulo, filas, situacionDe, { desde = 1, hasta = filas.length, co
           ${vis.map(({ e, pos }) => `
           <tr class="sit--${situacionDe(pos, e)} ${cortes.includes(pos) ? 'fila-corte' : ''}">
             <td class="num"><span class="pos-box">${pos}</span></td>
-            <td class="equipo"><a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
+            <td class="equipo">${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link" title="${e.nombre}">${e.nombre}</a>${e.origen ? `<small class="origen">${e.origen}</small>` : ''}</td>
             <td class="num num--sec">${e.pj}</td>
             <td class="num">${e.pts}</td>${extra ? `<td class="num num--sec">${extra.td(e)}</td>` : ''}
           </tr>`).join('')}
@@ -234,7 +235,7 @@ function vistaSegundaFase(F) {
 }
 
 function vistaCampeonato(F) {
-  const eq = (e, gana, etiqueta) => `<div class="serie__eq ${etiqueta ? '' : 'serie__eq--libre'} ${gana ? 'serie__eq--gana' : ''}">${etiqueta ? `<span class="cruce__pos">${etiqueta}</span>` : ''}<span class="cruce__nombre"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span></div>`;
+  const eq = (e, gana, etiqueta) => `<div class="serie__eq ${etiqueta ? '' : 'serie__eq--libre'} ${gana ? 'serie__eq--gana' : ''}">${etiqueta ? `<span class="cruce__pos">${etiqueta}</span>` : ''}<span class="cruce__nombre">${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span></div>`;
   const serie = ([a, b, g, ea, eb], label, nota) => `
     <div class="serie">
       <span class="serie__n">${label}</span>
@@ -257,7 +258,7 @@ function vistaCampeonato(F) {
 }
 
 function cuadroRevalida(F) {
-  const nom = (e) => (e ? `<a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>` : 'A confirmar');
+  const nom = (e) => (e ? `${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>` : 'A confirmar');
   const serie = (s, i) => {
     const pend = s.estado !== 'jugada';
     const lado = (e, g) => `<div class="serie__eq serie__eq--libre ${s.ganador && e && s.ganador.id === e.id ? 'serie__eq--gana' : ''}"><span class="cruce__nombre">${nom(e)}</span>${g != null ? `<span class="cruce__pts">${g}</span>` : ''}</div>`;
