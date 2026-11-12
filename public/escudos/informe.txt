@@ -86,40 +86,29 @@ ok   espn-17697 Defensores Unidos
 ok   espn-10147 Brown de Adrogué
 ok   espn-17705 UAI Urquiza
 ok   espn-10105 Ituzaingó
-ok   fed-douglas-haig Douglas Haig ← Douglas Haig (Argentina Torneo Federal A)
-ok   fed-sportivo-belgrano Sportivo Belgrano ← Sportivo Belgrano (Argentina Torneo Federal A)
-ok   fed-gimnasia-y-esgrima-chivilcoy Gimnasia y Esgrima (Chivilcoy) ← Gimnasia y Esgrima de Chivilcoy (Argentina Torneo Federal A)
-ok   fed-defensores-de-belgrano-vr Defensores de Belgrano (VR) ← Defensores de Belgrano de Villa Ramallo (Argentina Torneo Federal A)
-ok   fed-9-de-julio-rafaela 9 de Julio (Rafaela) ← 9 de Julio de Rafaela (Argentina Torneo Federal A)
-ok   fed-sportivo-las-parejas Sportivo Las Parejas ← Sportivo Las Parejas (Argentina Torneo Federal A)
-ok   fed-atletico-escobar Atlético Escobar ← Atlético Escobar (Argentina Torneo Federal A)
-ok   fed-independiente-chivilcoy Independiente (Chivilcoy) ← Independiente de Chivilcoy (Argentina Torneo Federal A)
-ok   fed-el-linqueno El Linqueño ← El Linqueño (Argentina Torneo Federal A)
-ok   fed-gimnasia-de-concepcion Gimnasia de Concepción ← Gimnasia y Esgrima de Concepción del Uruguay (Argentina Torneo Federal A)
-ok   fed-san-martin-formosa San Martín (Formosa) ← San Martín de Formosa (Argentina Torneo Federal A)
-FALTA fed-bartolome-mitre-posadas Bartolomé Mitre (Posadas)
+ok   fed-bartolome-mitre-posadas Bartolomé Mitre (Posadas) ← Bartolomé Mitre (Argentina Torneo Federal A)
 FALTA fed-sol-de-america Sol de América
-FALTA fed-sarmiento-la-banda Sarmiento (La Banda)
-FALTA fed-juventud-antoniana Juventud Antoniana
-FALTA fed-defensores-pto-vilelas Defensores (Pto. Vilelas)
-FALTA fed-boca-unidos-corrientes Boca Unidos (Corrientes)
-FALTA fed-tucuman-central Tucumán Central
-FALTA fed-sarmiento-resistencia Sarmiento (Resistencia)
-FALTA fed-cipolletti Cipolletti
-FALTA fed-argentino-monte-maiz Argentino (Monte Maíz)
-FALTA fed-atenas-rio-cuarto Atenas (Río Cuarto)
-FALTA fed-huracan-las-heras Huracán (Las Heras)
-FALTA fed-fundacion-amigos-por-el-deporte Fundación Amigos por el Deporte
-FALTA fed-deportivo-rincon Deportivo Rincón
-FALTA fed-san-martin-mendoza San Martín (Mendoza)
-FALTA fed-costa-brava-general-pico Costa Brava (General Pico)
-FALTA fed-juventud-unida-san-luis Juventud Unida (San Luis)
-FALTA fed-olimpo Olimpo
-FALTA fed-alvarado Alvarado
-FALTA fed-kimberley-mar-del-plata Kimberley (Mar del Plata)
-FALTA fed-villa-mitre Villa Mitre
-FALTA fed-germinal Germinal
-FALTA fed-sol-de-mayo Sol de Mayo
-FALTA fed-guillermo-brown Guillermo Brown
-FALTA fed-santamarina Santamarina
-FALTA fed-circulo-deportivo Círculo Deportivo
+ok   fed-sarmiento-la-banda Sarmiento (La Banda) ← Sarmiento de La Banda (Argentina Torneo Federal A)
+ok   fed-juventud-antoniana Juventud Antoniana ← Juventud Antoniana (Argentina Torneo Federal A)
+ok   fed-defensores-pto-vilelas Defensores (Pto. Vilelas) ← Defensores de Vilelas (Argentina Torneo Federal A)
+ok   fed-boca-unidos-corrientes Boca Unidos (Corrientes) ← Boca Unidos (Argentina Torneo Federal A)
+ok   fed-tucuman-central Tucumán Central ← Tucumán Central (Argentina Torneo Federal A)
+ok   fed-sarmiento-resistencia Sarmiento (Resistencia) ← Sarmiento de Resistencia (Argentina Torneo Federal A)
+ok   fed-cipolletti Cipolletti ← Cipolletti (Argentina Torneo Federal A)
+ok   fed-argentino-monte-maiz Argentino (Monte Maíz) ← Argentino de Monte Maíz (Argentina Torneo Federal A)
+ok   fed-atenas-rio-cuarto Atenas (Río Cuarto) ← Atenas de Río Cuarto (Argentina Torneo Federal A)
+ok   fed-huracan-las-heras Huracán (Las Heras) ← Huracán Las Heras (Argentina Torneo Federal A)
+ok   fed-fundacion-amigos-por-el-deporte Fundación Amigos por el Deporte ← FADEP (Argentina Torneo Federal A)
+ok   fed-deportivo-rincon Deportivo Rincón ← Deportivo Rincón (Argentina Torneo Federal A)
+ok   fed-san-martin-mendoza San Martín (Mendoza) ← San Martín de Mendoza (Argentina Torneo Federal A)
+ok   fed-costa-brava-general-pico Costa Brava (General Pico) ← Costa Brava (Argentina Torneo Federal A)
+ok   fed-juventud-unida-san-luis Juventud Unida (San Luis) ← Juventud Unida Universitario (Argentina Torneo Federal A)
+ok   fed-olimpo Olimpo ← Olimpo (Argentina Torneo Federal A)
+ok   fed-alvarado Alvarado ← Alvarado (Argentina Torneo Federal A)
+ok   fed-kimberley-mar-del-plata Kimberley (Mar del Plata) ← Kimberley (Argentina Torneo Federal A)
+ok   fed-villa-mitre Villa Mitre ← Villa Mitre (Argentina Torneo Federal A)
+ok   fed-germinal Germinal ← Germinal (Argentina Torneo Federal A)
+ok   fed-sol-de-mayo Sol de Mayo ← Sol de Mayo (Argentina Torneo Federal A)
+ok   fed-guillermo-brown Guillermo Brown ← Guillermo Brown (Argentina Torneo Federal A)
+ok   fed-santamarina Santamarina ← Santamarina (Argentina Torneo Federal A)
+ok   fed-circulo-deportivo Círculo Deportivo ← Círculo Deportivo (Argentina Torneo Federal A)
