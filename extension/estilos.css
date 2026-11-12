@@ -1,0 +1,21 @@
+:root { --negro:#111111; --gris:#242426; --violeta:#6E5F8B; --amarillo:#D6C34A; --blanco:#F1EFE8; --gris-texto:#B9B6AD; }
+* { box-sizing: border-box; }
+body { margin: 0; width: 360px; background: var(--negro); color: var(--blanco); font: 14px/1.4 system-ui, sans-serif; }
+body.opciones { width: auto; max-width: 480px; margin: 0 auto; }
+.cab { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; background: linear-gradient(180deg,#7D6E9A,#6E5F8B 45%,#54476E); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+.logo { font-weight: 800; letter-spacing: .03em; } .logo b { color: var(--amarillo); }
+.sub { font-size: 12px; color: #E4E0EE; }
+main { padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--gris-texto); }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+select, input, textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #8A7BA8; background: var(--gris); color: var(--blanco); font: inherit; }
+textarea { font: 12.5px/1.45 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+button { min-height: 38px; padding: 0 12px; border-radius: 4px; border: 1px solid rgba(241,239,232,.2); background: var(--gris); color: var(--blanco); font: inherit; font-weight: 700; cursor: pointer; }
+button.primario { background: var(--amarillo); color: var(--negro); border-color: var(--amarillo); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
+.lista li { padding: 5px 8px; border-left: 3px solid; background: var(--gris); border-radius: 2px; display: flex; flex-direction: column; }
+.lista .bien { border-color: var(--amarillo); } .lista .mal { border-color: #B8483A; } .lista small { color: #F3C9C0; }
+.nota { margin: 0; color: var(--gris-texto); font-size: 12.5px; }
+.aviso { margin: 0; padding: 8px 10px; border-radius: 4px; background: var(--gris); font-size: 13px; }
+.aviso.ok { border: 1px solid var(--amarillo); } .aviso.error { border: 1px solid #B8483A; background: rgba(142,47,37,.3); }

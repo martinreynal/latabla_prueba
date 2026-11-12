@@ -14,6 +14,7 @@ import { inferiores } from './pages/inferiores.js';
 import { equipo } from './pages/equipo.js';
 import { admin } from './pages/admin.js';
 import { cargarPartidos } from './lib/resultados.js';
+import { cargarVivo } from './lib/vivo.js';
 import { juego } from './pages/juego.js';
 import './lib/supabase.js';
 
@@ -81,4 +82,4 @@ document.addEventListener('click', (e) => {
 window.addEventListener('popstate', rutear);
 document.addEventListener('latabla:navegar', (e) => navegar(e.detail));
 if (HASH) window.addEventListener('hashchange', rutear);
-cargarPartidos().catch(() => {}).finally(rutear);
+Promise.allSettled([cargarPartidos(), cargarVivo()]).finally(rutear);

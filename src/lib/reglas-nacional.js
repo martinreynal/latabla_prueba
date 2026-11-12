@@ -7,7 +7,7 @@ export const REGLAS_NACIONAL = {
 };
 
 const orden = (a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf;
-export const ordenarZona = (z) => [...z].sort(orden);
+export const ordenarZona = (z) => [...z].sort(z.every((e) => e.rank) ? (a, b) => a.rank - b.rank : orden);
 
 // 'ascenso' (1°), 'reducido' (2° a 8°), 'descenso' (2 últimos) o 'neutro'
 export function situacion(pos, total = REGLAS_NACIONAL.equiposPorZona) {

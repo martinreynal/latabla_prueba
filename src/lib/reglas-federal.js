@@ -2,7 +2,7 @@
 import { rng, equipoSimulado } from '../data/tercera-ejemplo.js';
 
 const orden = (a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf;
-export const ordenar = (t) => [...t].sort(orden);
+export const ordenar = (t) => [...t].sort(t.every((e) => e.rank) ? (a, b) => a.rank - b.rank : orden);
 
 // ---------- Primera Fase ----------
 export function primeraFase(zonas) {

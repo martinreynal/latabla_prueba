@@ -7,7 +7,7 @@ export const REGLAS = {
 
 const porPuntos = (a, b) => b.pts - a.pts || b.dg - a.dg || (b.gf ?? 0) - (a.gf ?? 0);
 
-export function ordenarZona(z) { return [...z].sort(porPuntos); }
+export function ordenarZona(z) { return [...z].sort(z.every((e) => e.rank) ? (a, b) => a.rank - b.rank : porPuntos); }
 export function ordenarAnual(t) { return [...t].sort(porPuntos); }
 export function ordenarPromedios(t) {
   return t.map((e) => ({ ...e, prom: e.pts / e.pj })).sort((a, b) => b.prom - a.prom);

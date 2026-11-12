@@ -28,7 +28,7 @@ export function menu() {
       <a href="/" data-link class="menu__item menu__item--seccion" data-seccion="juegos">${icon('grilla', 22)}Juegos</a>
     </div>
 
-    <p class="menu__pie solo-tablas"><span class="punto-vivo punto-vivo--apagado"></span> Datos cargados a mano · <a href="/admin" data-link class="menu__admin">Cargar resultados</a></p>
+    <p class="menu__pie solo-tablas">${import.meta.env.MODE === 'artifact' ? '<span class="punto-vivo punto-vivo--apagado"></span> Vista previa con datos de ejemplo · ' : '<span class="punto-vivo"></span> Primera, Nacional y B en vivo (ESPN) · '}<a href="/admin" data-link class="menu__admin">Cargar resultados</a></p>
   </nav>
 
   <nav class="tabs" aria-label="Secciones">

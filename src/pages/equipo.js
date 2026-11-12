@@ -1,9 +1,48 @@
 import { buscarEquipo, fichaEquipo } from '../lib/equipos.js';
 import { icon } from '../lib/icons.js';
+import { equipoVivo, haceCuanto } from '../lib/vivo.js';
+
+const TORNEO_VIVO = {
+  primera: { cat: 'Primera División', nombre: 'Liga Profesional · Clausura 2026', ruta: '/tablas/primera' },
+  nacional: { cat: 'Segunda División', nombre: 'Primera Nacional 2026', ruta: '/tablas/segunda' },
+  bmetro: { cat: 'Tercera División', nombre: 'Primera B 2026', ruta: '/tablas/tercera/primera-b' },
+};
+
+function perfilReal(v) {
+  const t = TORNEO_VIVO[v.torneo];
+  const f = v.fila;
+  const zona = v.zona === 'U' ? 'Tabla general' : `Zona ${v.zona}`;
+  const dato = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
+  return {
+    titulo: `${f.nombre} · Latabla`,
+    html: `
+    <section class="perfil">
+      <a href="${t.ruta}" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
+      <p class="estado-datos"><span class="punto-vivo"></span>En vivo · ESPN · ${haceCuanto(v.actualizado)}</p>
+      <header class="perfil__cab">
+        <div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>
+        <div class="perfil__id">
+          <span class="perfil__cat">${t.cat}</span>
+          <h1 class="titulo-grande perfil__nombre">${f.nombre}</h1>
+          <p class="perfil__torneo">${t.nombre} · ${zona}</p>
+        </div>
+      </header>
+      <dl class="ficha">
+        ${dato('Posición', `${v.pos}.º de ${v.total}`)}${dato('Puntos', f.pts)}${dato('Partidos', f.pj)}
+        ${dato('G · E · P', `${f.pg} · ${f.pe} · ${f.pp}`)}${dato('Goles', `${f.gf} a favor · ${f.gc} en contra`)}${dato('Diferencia', f.dg > 0 ? `+${f.dg}` : f.dg)}
+      </dl>
+      <p class="aviso">Escudo, estadio y plantel de este club todavía no están cargados. Los vamos a sumar desde la base de datos, con fuentes verificadas.</p>
+    </section>`,
+  };
+}
 
 const iniciales = (n) => n.replace(/^(Equipo|Club) /, '').split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase();
 
 export function equipo(id) {
+  if (id.startsWith('espn-')) {
+    const v = equipoVivo(id);
+    return v ? perfilReal(v) : null;
+  }
   const eq = buscarEquipo(id);
   if (!eq) return null;
   const f = fichaEquipo(eq);

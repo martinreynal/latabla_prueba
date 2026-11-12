@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><link rel="stylesheet" href="estilos.css"><title>Latabla · Configuración</title></head>
+<body class="opciones">
+  <header class="cab"><span class="logo"><b>LA</b>TABLA</span><span class="sub">Configuración</span></header>
+  <main>
+    <label>Dirección de tu Latabla<input id="url" type="url" placeholder="https://latabla-xxxx.vercel.app"></label>
+    <label>Token de la API<input id="token" type="password" autocomplete="off"></label>
+    <p class="nota">Es el mismo valor que cargaste en Vercel como LATABLA_API_TOKEN. Queda guardado solo en este navegador.</p>
+    <button id="guardar" class="primario">Guardar</button>
+    <p class="aviso" id="msg" hidden></p>
+  </main>
+  <script src="opciones.js"></script>
+</body>
+</html>
