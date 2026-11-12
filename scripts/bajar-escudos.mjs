@@ -57,6 +57,7 @@ const BUSQUEDA = {
   'fed-juventud-unida-san-luis': ['Juventud Unida Universitario', 'Juventud Unida San Luis'],
   'fed-kimberley-mar-del-plata': ['Kimberley', 'Kimberley Mar del Plata'],
   'fed-guillermo-brown': ['Guillermo Brown'],
+  'fed-sol-de-america': ['Sol de America Formosa', 'Sol de América de Formosa', 'Sol de America'],
 };
 async function buscar(t) {
   for (let intento = 1; intento <= 4; intento++) {
