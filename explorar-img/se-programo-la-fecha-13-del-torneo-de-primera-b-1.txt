@@ -1,0 +1,17 @@
+Tabla
+Cub PJ PGR PGE PGP P GF GC DG Pts
+TIGRE mMo9. 0. 1 1 68 30 +38 28
+ORIENTACION JUVENIL. 2.9.0. 0 3 065 44 +21 27
+FUTBOL PLAYA ESCOBAR. 128 0 1 3 59 48 Mm 25
+UNIV.NAC. DETRES DE FEBRERO 12.8 0 0 4 56 45m o24
+UNIV.NAC. DESAN MARTIN. 12m 70 0 5 6760 +7 21
+DEP. HURLINGHAM 12.6. 0 2 4 56 44 +12 20
+NEWELUS Mos 0. 1 5 38 37 +1 16
+SOMRA 12.03 02 2 5 52 5 2 415
+UNIV. NACIONAL DE HURLINGHAM. 2.4 0.0. 080440301
+REAL VICTORIA (UGA) 2. a 0. 0. 80560 0. 12
+DON TORCUATO 2 3 0. 0.9 46618 9 0
+'SPORTIVO ITALIANO. 1.2.0. 1 07 039 51 142 7
+UNION (AFA) 2. 2 0. 0 103261 22 6
+EDRIS. 2.2.0... 0. 1 01nm.4u0m7%0231041
+Pos: Posición, PK Paros jugados, POR: Gonados en tiempo regula, E Empatados, POE: Ganados en tempo extra, POP: Paidos ganado en perales, P: Perdidos, GF: Goles favor, GC Goes en contra, DG: Dierenc de goles, Pis Puntos
