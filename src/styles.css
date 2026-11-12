@@ -1304,3 +1304,9 @@ a.tile:active { transform: translateY(0); }
 .eq-celda .eq-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .eq-celda .marca { flex-shrink: 0; }
 .tabla--nacional td.equipo .eq-link { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Series sin posición (Reválida real, semis y final del Federal A): nombre + goles */
+.serie__eq--libre, .serie--pend .serie__eq--libre { grid-template-columns: minmax(0, 1fr) auto; padding: 0 10px; gap: 8px; }
+.serie__eq--libre .cruce__nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.serie__eq--libre .cruce__pts { font-weight: 700; min-width: 18px; text-align: right; }
+.serie__eq--libre .eq-link { color: inherit; }

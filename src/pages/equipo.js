@@ -2,11 +2,13 @@ import { buscarEquipo, fichaEquipo } from '../lib/equipos.js';
 import { icon } from '../lib/icons.js';
 import { equipoVivo, haceCuanto } from '../lib/vivo.js';
 import { ANUAL_REAL, PRIMERA_REAL } from '../data/primera-real.js';
+import { REGULAR, FEDERAL_ACTUALIZADO } from '../data/federal-real.js';
 
 const TORNEO_VIVO = {
   primera: { cat: 'Primera División', nombre: 'Liga Profesional · Clausura 2026', ruta: '/tablas/primera' },
   nacional: { cat: 'Segunda División', nombre: 'Primera Nacional 2026', ruta: '/tablas/segunda' },
   bmetro: { cat: 'Tercera División', nombre: 'Primera B 2026', ruta: '/tablas/tercera/primera-b' },
+  federal: { cat: 'Tercera División', nombre: 'Federal A 2026 · Primera Fase', ruta: '/tablas/tercera/federal-a' },
 };
 
 function perfilReal(v) {
@@ -19,7 +21,7 @@ function perfilReal(v) {
     html: `
     <section class="perfil">
       <a href="${t.ruta}" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
-      <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
+      <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : v.torneo === 'federal' ? `Datos reales · cargados al ${FEDERAL_ACTUALIZADO}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
       <header class="perfil__cab">
         <div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>
         <div class="perfil__id">
@@ -40,6 +42,13 @@ function perfilReal(v) {
 const iniciales = (n) => n.replace(/^(Equipo|Club) /, '').split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase();
 
 export function equipo(id) {
+  if (id.startsWith('fed-')) {
+    for (const [zona, t] of Object.entries(REGULAR)) {
+      const i = t.findIndex((e) => e.id === id);
+      if (i >= 0) return perfilReal({ torneo: 'federal', zona, fila: t[i], pos: i + 1, total: t.length, actualizado: null });
+    }
+    return null;
+  }
   if (id.startsWith('espn-')) {
     let v = equipoVivo(id);
     if (!v) {

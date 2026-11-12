@@ -1,6 +1,9 @@
 import { tablaZona as tablaCargada } from '../lib/resultados.js';
-import { BMETRO_EJEMPLO as BM, FEDERAL_EJEMPLO as FD } from '../data/tercera-ejemplo.js';
-import { ordenar, federalCompleto, recorrido } from '../lib/reglas-federal.js';
+import { BMETRO_EJEMPLO as BM } from '../data/tercera-ejemplo.js';
+import { ordenar, federalReal, recorridoReal } from '../lib/reglas-federal.js';
+import { FEDERAL_ACTUALIZADO, REGULAR, SEGUNDA, REVALIDA1, CUADRO, CAMPEONATO, ETAPAS_REVALIDA } from '../data/federal-real.js';
+
+const FED = { regular: REGULAR, segunda: SEGUNDA, revalida: REVALIDA1, cuadro: CUADRO, campeonato: CAMPEONATO };
 import { abrirMenu } from '../components/menu.js';
 import { icon } from '../lib/icons.js';
 import { irA } from '../data/estructura.js';
@@ -134,7 +137,7 @@ function mapaFederal(F) {
     </g>`;
   const A = (d, cls = '') => `<path class="farista ${cls}" d="${d}" marker-end="url(#fpunta)"/>`;
   const L = (x, y, t, anchor = 'middle') => `<text class="flabel" x="${x}" y="${y}" text-anchor="${anchor}">${t}</text>`;
-  const fase = FD.estado;
+  const fase = 'r4';
   const act = (id) => (id === fase ? 'actual' : '');
   return `
   <section class="mapa" aria-labelledby="t-fmapa">
@@ -159,7 +162,7 @@ function mapaFederal(F) {
         ${B('sm', 10, 286, 'SEMIFINALES', '4 equipos · ida y vuelta', 'main ' + act('cuarta'))}
         ${B('r3', 200, 286, '3.ª ETAPA', '14 equipos · 7 series', 'rev')}
         ${B('fi', 10, 376, 'FINAL', 'Partido único · cancha neutral', 'main ' + act('final'))}
-        ${B('r4', 200, 376, '4.ª ETAPA', '8 equipos · 4 series', 'rev')}
+        ${B('r4', 200, 376, '4.ª ETAPA', '8 equipos · 4 series', 'rev ' + act('r4'))}
         ${B('as1', 10, 466, '1.ER ASCENSO', 'a Primera Nacional 2027', 'asc')}
         ${B('r5', 200, 466, '5.ª Y 6.ª ETAPA', 'Semis y final', 'rev')}
         ${B('as2', 200, 556, '2.º ASCENSO', 'a Primera Nacional 2027', 'asc')}
@@ -191,8 +194,8 @@ function mapaFederal(F) {
 }
 
 function dondeEsta(F) {
-  const todos = [1, 2, 3, 4].flatMap((z) => F.pf.tablas[z].map((e) => ({ ...e, z }))).sort((a, b) => a.nombre.localeCompare(b.nombre));
-  const pasos = equipoSel ? recorrido(F, equipoSel) : null;
+  const todos = Object.entries(F.pf.tablas).flatMap(([z, t]) => t.map((e) => ({ ...e, z }))).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const pasos = equipoSel ? recorridoReal(F, equipoSel) : null;
   return `
   <section class="donde" aria-labelledby="t-donde">
     <h2 id="t-donde" class="hoy__titulo">¿Dónde está cada equipo?</h2>
@@ -208,17 +211,17 @@ function dondeEsta(F) {
             <span class="recorrido__fase">${p.fase}</span>
             <span class="recorrido__texto">${p.texto}</span>
           </li>`).join(`<li class="recorrido__flecha" aria-hidden="true">${flecha}</li>`)}
-      </ol>` : '<p class="hoy__nota">Vas a ver su recorrido fase por fase y si sigue en carrera por algún ascenso.</p>'}
+      </ol>` : '<p class="hoy__nota">Vas a ver su recorrido fase por fase y si sigue en carrera por el ascenso.</p>'}
   </section>`;
 }
 
 function vistaPrimeraFase(F) {
   const sit = (z) => (pos, e) => (F.pf.clasifica(z, pos, e) ? 'reducido' : 'neutro');
   return `
-    ${leyenda([['reducido', 'Pasa a la Segunda Fase'], ['neutro', 'Va a la Reválida']])}
-    <p class="hoy__nota nota-mq">Pasan del 1.º al 5.º de la Zona 1 (10 equipos), del 1.º al 4.º de las zonas de 9 y el mejor 5.º de esas tres zonas. Este año fue <strong>${F.pf.mejorQuinto.nombre}</strong> (Zona ${F.pf.mejorQuinto.zona}).</p>
+    ${leyenda([['reducido', 'Pasó a la Segunda Fase'], ['neutro', 'Fue a la Reválida']])}
+    <p class="hoy__nota nota-mq">Pasaron del 1.º al 5.º de la Zona A (10 equipos), del 1.º al 4.º de las zonas de 9 y el mejor 5.º de esas tres zonas: <strong>${F.pf.mejorQuinto.nombre}</strong> (Zona ${F.pf.mejorQuinto.zona}, ${F.pf.mejorQuinto.pts} pts).</p>
     <div class="cuatro-tablas">
-      ${[1, 2, 3, 4].map((z) => tabla(`Zona ${z}`, F.pf.tablas[z], sit(z), { cortes: [z === 1 ? 5 : 4] })).join('')}
+      ${Object.entries(F.pf.tablas).map(([z, t]) => tabla(`Zona ${z}`, t, sit(z), { cortes: [z === 'A' ? 5 : 4] })).join('')}
     </div>`;
 }
 
@@ -226,41 +229,56 @@ function vistaSegundaFase(F) {
   const sit = (pos) => (pos <= 4 ? 'reducido' : 'neutro');
   return `
     ${leyenda([['reducido', '1.º a 4.º · Cuartos de final'], ['neutro', '5.º a 9.º · Reválida 2.ª etapa']])}
-    <p class="hoy__nota nota-mq">Todos arrancan de cero y juegan una sola rueda. Debajo de cada nombre, cómo llegó.</p>
+    <p class="hoy__nota nota-mq">Todos arrancaron de cero y jugaron una sola rueda.</p>
     <div class="dos-tablas">${tabla('Zona A', F.sf.A, sit, { cortes: [4] })}${tabla('Zona B', F.sf.B, sit, { cortes: [4] })}</div>`;
 }
 
 function vistaCampeonato(F) {
-  const serie = (c) => `
+  const eq = (e, gana, etiqueta) => `<div class="serie__eq ${etiqueta ? '' : 'serie__eq--libre'} ${gana ? 'serie__eq--gana' : ''}">${etiqueta ? `<span class="cruce__pos">${etiqueta}</span>` : ''}<span class="cruce__nombre"><a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a></span></div>`;
+  const serie = ([a, b, g, ea, eb], label, nota) => `
     <div class="serie">
-      <span class="serie__n">Serie ${c.n}</span>
-      <div class="serie__eq ${c.ganador.id === c.mejor.id ? 'serie__eq--gana' : ''}"><span class="cruce__pos">${c.mejor.etiqueta}</span><span class="cruce__nombre">${c.mejor.nombre}</span></div>
-      <div class="serie__eq ${c.ganador.id === c.peor.id ? 'serie__eq--gana' : ''}"><span class="cruce__pos">${c.peor.etiqueta}</span><span class="cruce__nombre">${c.peor.nombre}</span></div>
-      <p class="serie__global">Global <strong>${c.global}</strong> · pasa ${c.ganador.nombre} ${c.criterio}</p>
-      <p class="serie__det">Ida: ${c.ida}<br>Vuelta: ${c.vuelta}</p>
-      <p class="serie__rev">${c.perdedor.nombre} sigue vivo en la Reválida (2.ª etapa).</p>
-    </div>`;
-  const q = F.cuartos;
-  const pend = (a, b, label) => `
-    <div class="serie serie--pend">
       <span class="serie__n">${label}</span>
-      <div class="serie__eq"><span class="cruce__nombre">${a}</span></div>
-      <div class="serie__eq"><span class="cruce__nombre">${b}</span></div>
-      <p class="serie__global">Por jugar · ida y vuelta</p>
+      ${eq(a, g.id === a.id, ea)}${eq(b, g.id === b.id, eb)}
+      <p class="serie__global">Pasó <strong>${g.nombre}</strong></p>
+      ${nota ? `<p class="serie__rev">${(g.id === a.id ? b : a).nombre} ${nota}</p>` : ''}
     </div>`;
+  const C = F.camp;
   return `
-    <p class="hoy__nota nota-mq">Desde acá se juega por eliminación directa. Si la serie termina igual en puntos y diferencia de gol, pasa el 1.º o 2.º de su zona de la Segunda Fase. Los perdedores no quedan afuera: pasan a la Reválida.</p>
+    <p class="hoy__nota nota-mq">Eliminación directa a ida y vuelta, con final a partido único. Los perdedores siguen en la Reválida.</p>
+    <p class="aviso">Faltan los resultados de esta fase. Los cruces salen del reglamento y quién pasó se deduce de en qué etapa entró cada club a la Reválida.</p>
     <div class="llaves">
-      <div class="llaves__col"><h3 class="llave__titulo">Cuartos de final</h3>${q.map(serie).join('')}</div>
-      <div class="llaves__col"><h3 class="llave__titulo">Semifinales</h3>
-        ${pend(q[0].ganador.nombre, q[1].ganador.nombre, 'Semi 1')}
-        ${pend(q[2].ganador.nombre, q[3].ganador.nombre, 'Semi 2')}
-      </div>
+      <div class="llaves__col"><h3 class="llave__titulo">Cuartos de final</h3>${C.cuartos.map((s, i) => serie(s, `Serie ${i + 1}`, 'pasó a la Reválida (2.ª etapa).')).join('')}</div>
+      <div class="llaves__col"><h3 class="llave__titulo">Semifinales</h3>${C.semis.map((s, i) => serie(s, `Semi ${i + 1}`, 'pasó a la Reválida (3.ª etapa).')).join('')}</div>
       <div class="llaves__col"><h3 class="llave__titulo">Final</h3>
-        ${pend('Ganador Semi 1', 'Ganador Semi 2', 'Partido único · neutral')}
-        <div class="asc-chip">${icon('flame', 14)}El ganador asciende a Primera Nacional</div>
+        ${serie(C.final, 'Partido único · neutral', 'pasó a la Reválida (4.ª etapa).')}
+        <div class="asc-chip">${icon('flame', 14)}${C.final[2].nombre} asciende a Primera Nacional</div>
       </div>
     </div>`;
+}
+
+function cuadroRevalida(F) {
+  const nom = (e) => (e ? `<a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>` : 'A confirmar');
+  const serie = (s, i) => {
+    const pend = s.estado !== 'jugada';
+    const lado = (e, g) => `<div class="serie__eq serie__eq--libre ${s.ganador && e && s.ganador.id === e.id ? 'serie__eq--gana' : ''}"><span class="cruce__nombre">${nom(e)}</span>${g != null ? `<span class="cruce__pts">${g}</span>` : ''}</div>`;
+    const pie = s.estado === 'jugada' ? `Global <strong>${s.g1}–${s.g2}</strong> · pasa ${s.ganador.nombre}${s.g1 === s.g2 ? ' tras igualar la serie' : ''}`
+      : s.estado === 'en-juego' ? `En juego · va <strong>${s.g1}–${s.g2}</strong>, falta la vuelta` : 'Por jugar';
+    return `
+      <div class="serie ${pend ? 'serie--pend' : ''}">
+        <span class="serie__n">Serie ${i + 1}</span>
+        ${lado(s.e1, s.g1)}${lado(s.e2, s.g2)}
+        <p class="serie__global">${pie}</p>
+      </div>`;
+  };
+  return ETAPAS_REVALIDA.map((et) => {
+    const series = F.cuadro.filter((s) => s.etapa === et.n);
+    return `
+    <section class="hoy">
+      <div class="hoy__cab"><h2 class="hoy__titulo">Reválida · ${et.nombre}</h2>${series.every((s) => s.estado === 'jugada') ? '' : `<span class="provisorio">${series.every((s) => s.estado === 'pendiente') ? 'Por jugar' : 'En juego'}</span>`}</div>
+      <p class="hoy__nota">${et.detalle}</p>
+      <div class="reducido__grilla">${series.map(serie).join('')}</div>
+    </section>`;
+  }).join('');
 }
 
 function vistaRevalida(F) {
@@ -268,29 +286,20 @@ function vistaRevalida(F) {
   const sit = (pos, e) => (r1.descienden.has(e.id) ? 'descenso' : r1.pasan.has(e.id) ? 'reducido' : 'neutro');
   const promA = new Map(r1.promA.map((e) => [e.id, e.clave]));
   const ptsB = new Map(r1.ptsB.map((e) => [e.id, e.clave]));
+  const empates = r1.empates.map(([a, b]) => `<strong>${a.nombre}</strong> y <strong>${b.nombre}</strong>`).join('; ');
   return `
-    ${leyenda([['reducido', 'Pasa a la 2.ª etapa'], ['descenso', 'Desciende'], ['neutro', 'Termina su temporada']])}
+    ${leyenda([['reducido', 'Pasó a la 2.ª etapa'], ['descenso', 'Desciende'], ['neutro', 'Terminó su temporada']])}
     <p class="hoy__nota nota-mq">1.ª etapa: los 19 que no pasaron la Primera Fase, en dos zonas, una rueda desde cero. Descienden los dos de peor promedio de la Zona A y los dos con menos puntos de la Zona B, sumando Primera Fase y 1.ª etapa.</p>
+    ${empates ? `<p class="aviso">Empatan en puntos en el límite del descenso ${empates}. Lo marcamos por diferencia de gol; a confirmar con el reglamento.</p>` : ''}
     <div class="dos-tablas">
       ${tabla('Reválida · Zona A', r1.A, sit, { extra: { th: 'Prom', td: (e) => promA.get(e.id).toFixed(3) } })}
       ${tabla('Reválida · Zona B', r1.B, sit, { extra: { th: 'Acum', td: (e) => ptsB.get(e.id) } })}
     </div>
-    <section class="hoy">
-      <div class="hoy__cab"><h2 class="hoy__titulo">2.ª etapa: así se cruzan</h2><span class="provisorio">Por jugar</span></div>
-      <p class="hoy__nota">24 equipos ordenados del 1 al 24: primero los perdedores de cuartos, después los 5.º a 9.º de la Segunda Fase y por último los clasificados de la 1.ª etapa. Se cruzan 1 vs 24, 2 vs 23 y así.</p>
-      <div class="reducido__grilla">
-        ${F.r2.cruces.map(([a, b]) => `
-          <div class="cruce cruce--provisorio">
-            <span class="cruce__n">${a.semilla}</span>
-            <div class="cruce__eq"><span class="cruce__pos">#${a.semilla}</span><span class="cruce__nombre">${a.nombre}<small class="origen">${a.motivo}</small></span><span class="cruce__pts"></span></div>
-            <div class="cruce__eq"><span class="cruce__pos">#${b.semilla}</span><span class="cruce__nombre">${b.nombre}<small class="origen">${b.motivo}</small></span><span class="cruce__pts"></span></div>
-          </div>`).join('')}
-      </div>
-    </section>`;
+    ${cuadroRevalida(F)}`;
 }
 
 function vistaFederal() {
-  const F = federalCompleto(FD);
+  const F = federalReal(FED);
   let cuerpo;
   if (vistaF === 'primera') cuerpo = vistaPrimeraFase(F);
   else if (vistaF === 'segunda') cuerpo = vistaSegundaFase(F);
@@ -299,7 +308,7 @@ function vistaFederal() {
   else cuerpo = mapaFederal(F);
   return `
     <p class="formato-resumen"><strong>Torneo por etapas.</strong> Zonas regionales, reclasificación, eliminatorias y una Reválida paralela. Dos ascensos y cuatro descensos.</p>
-    <p class="fase-actual">Fase en juego: <strong>Cuartos de final</strong> · Reválida: <strong>2.ª etapa</strong></p>
+    <p class="fase-actual">Camino principal: <strong>terminado</strong> · Reválida: <strong>4.ª etapa</strong></p>
     ${pestanas([['mapa', 'Mapa'], ['primera', 'Primera Fase'], ['segunda', 'Segunda Fase'], ['campeonato', 'Fase Campeonato'], ['revalida', 'Reválida']], vistaF, 'data-vf')}
     <div class="fed-cuerpo">${cuerpo}</div>
     ${dondeEsta(F)}`;
@@ -318,7 +327,7 @@ export function tercera(sub) {
     html: `
     <section class="tabla-pag tabla-pag--tercera">
       <div class="tabla-pag__cab">
-        <p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo</p>
+        <p class="estado-datos" id="tercera-estado"></p>
         <h1 class="titulo-grande">Tercera División</h1>
         <p class="tabla-pag__torneo">Temporada 2026 · dos torneos en paralelo según la afiliación del club</p>
         <button type="button" class="btn-categoria" id="btn-categoria">${icon('menu', 18)}Cambiar categoría</button>
@@ -334,6 +343,9 @@ export function tercera(sub) {
       const cont = document.getElementById('tercera-contenido');
       const pintar = () => {
         cont.innerHTML = contenido();
+        document.getElementById('tercera-estado').innerHTML = torneo === 'federal'
+          ? `<span class="punto-vivo"></span>Datos reales · cargados al ${FEDERAL_ACTUALIZADO}`
+          : '<span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo';
         document.querySelectorAll('[data-torneo]').forEach((b) => {
           const on = b.dataset.torneo === torneo;
           b.classList.toggle('activo', on);

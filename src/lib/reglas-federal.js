@@ -162,3 +162,92 @@ export function recorrido(F, id) {
   pasos.push({ fase: 'Reválida · 2.ª etapa', texto: `Cabeza n.º ${s.semilla} · por jugar contra ${rival.nombre}`, tipo: 'actual' });
   return pasos;
 }
+
+// ---------- Datos reales 2026 ----------
+// Mismas reglas que arriba, aplicadas a las tablas cargadas (zonas A–D de la Primera Fase).
+export function federalReal(D) {
+  const tablas = D.regular;
+  const quintos = ['B', 'C', 'D'].map((z) => ({ ...tablas[z][4], zona: z })).sort(orden);
+  const mejorQuinto = quintos[0];
+  const clasifica = (z, pos, e) => (z === 'A' ? pos <= 5 : pos <= 4 || e.id === mejorQuinto.id);
+  const pf = { tablas, mejorQuinto, clasifica };
+
+  // Reválida 1.ª etapa: descienden 2 por zona (A por promedio, B por puntos, sumando Primera Fase).
+  const enPF = new Map(Object.values(tablas).flat().map((e) => [e.id, e]));
+  const suma = (e) => { const p = enPF.get(e.id); return { pts: p.pts + e.pts, pj: p.pj + e.pj, dg: p.dg + e.dg }; };
+  const promA = D.revalida.A.map((e) => { const s = suma(e); return { ...e, clave: s.pts / s.pj, dgT: s.dg }; })
+    .sort((a, b) => a.clave - b.clave || a.dgT - b.dgT);
+  const ptsB = D.revalida.B.map((e) => { const s = suma(e); return { ...e, clave: s.pts, dgT: s.dg }; })
+    .sort((a, b) => a.clave - b.clave || a.dgT - b.dgT);
+  const descienden = new Set([...promA.slice(0, 2), ...ptsB.slice(0, 2)].map((e) => e.id));
+  // Empate en el último puesto de descenso que se define por diferencia de gol: queda "a confirmar".
+  const empate = (l) => (l[1].clave === l[2].clave ? [l[1], l[2]] : null);
+  const empates = [empate(promA), empate(ptsB)].filter(Boolean);
+  const top5 = (t) => t.filter((e) => !descienden.has(e.id)).slice(0, 5).map((e) => e.id);
+  const pasan = new Set([...top5(D.revalida.A), ...top5(D.revalida.B)]);
+  const r1 = { A: D.revalida.A, B: D.revalida.B, descienden, pasan, promA, ptsB, empates };
+
+  return { pf, sf: D.segunda, r1, cuadro: D.cuadro, camp: D.campeonato };
+}
+
+export function recorridoReal(F, id) {
+  const pasos = [];
+  const nombre = (e) => e?.nombre ?? 'a confirmar';
+  let zPF;
+  let posPF;
+  for (const z of Object.keys(F.pf.tablas)) {
+    const i = F.pf.tablas[z].findIndex((e) => e.id === id);
+    if (i >= 0) { zPF = z; posPF = i + 1; }
+  }
+  if (!zPF) return pasos;
+  const clasifico = F.pf.clasifica(zPF, posPF, F.pf.tablas[zPF][posPF - 1]);
+  pasos.push({ fase: 'Primera Fase', texto: `${posPF}.º de la Zona ${zPF}`, tipo: clasifico ? 'ok' : 'baja' });
+
+  if (clasifico) {
+    const z = F.sf.A.some((e) => e.id === id) ? 'A' : 'B';
+    const pos = F.sf[z].findIndex((e) => e.id === id) + 1;
+    pasos.push({ fase: `Segunda Fase · Zona ${z}`, texto: `${pos}.º`, tipo: pos <= 4 ? 'ok' : 'baja' });
+    if (pos <= 4) {
+      const rondas = [['Cuartos de final', F.camp.cuartos], ['Semifinal', F.camp.semis], ['Final', [F.camp.final]]];
+      for (const [fase, series] of rondas) {
+        const s = series.find(([a, b]) => a.id === id || b.id === id);
+        if (!s) break;
+        const rival = s[0].id === id ? s[1] : s[0];
+        const gano = s[2].id === id;
+        pasos.push({ fase, texto: `${gano ? 'Le ganó' : 'Perdió'} la serie con ${rival.nombre}`, tipo: gano ? 'ok' : 'baja' });
+        if (!gano) break;
+        if (fase === 'Final') { pasos.push({ fase: '1.er ascenso', texto: 'Asciende a Primera Nacional 2027', tipo: 'actual' }); return pasos; }
+      }
+    }
+  } else {
+    const z = F.r1.A.some((e) => e.id === id) ? 'A' : 'B';
+    const pos = F.r1[z].findIndex((e) => e.id === id) + 1;
+    if (F.r1.descienden.has(id)) {
+      pasos.push({ fase: `Reválida 1.ª etapa · Zona ${z}`, texto: `${pos}.º · ${z === 'A' ? 'peor promedio' : 'menos puntos'} de la zona`, tipo: 'baja' });
+      pasos.push({ fase: 'Descenso', texto: 'Desciende al Regional Amateur 2027', tipo: 'desc' });
+      return pasos;
+    }
+    if (!F.r1.pasan.has(id)) {
+      pasos.push({ fase: `Reválida 1.ª etapa · Zona ${z}`, texto: `${pos}.º · quedó afuera`, tipo: 'baja' });
+      pasos.push({ fase: 'Temporada terminada', texto: 'Mantiene la categoría', tipo: 'fin' });
+      return pasos;
+    }
+    pasos.push({ fase: `Reválida 1.ª etapa · Zona ${z}`, texto: `${pos}.º`, tipo: 'ok' });
+  }
+
+  for (const s of F.cuadro) {
+    if (s.e1?.id !== id && s.e2?.id !== id) continue;
+    const yo1 = s.e1.id === id;
+    const rival = yo1 ? s.e2 : s.e1;
+    const fase = `Reválida · ${s.etapa}.ª etapa`;
+    if (s.estado === 'pendiente') { pasos.push({ fase, texto: `Por jugar contra ${nombre(rival)}`, tipo: 'actual' }); return pasos; }
+    const res = yo1 ? `${s.g1}–${s.g2}` : `${s.g2}–${s.g1}`;
+    if (s.estado === 'en-juego') { pasos.push({ fase, texto: `Serie en juego con ${rival.nombre} · va ${res}`, tipo: 'actual' }); return pasos; }
+    const gano = s.ganador.id === id;
+    pasos.push({ fase, texto: `${gano ? 'Le ganó' : 'Perdió'} con ${rival.nombre} · global ${res}`, tipo: gano ? 'ok' : 'baja' });
+    if (!gano) { pasos.push({ fase: 'Temporada terminada', texto: 'Mantiene la categoría', tipo: 'fin' }); return pasos; }
+  }
+  const ultimo = pasos[pasos.length - 1];
+  if (ultimo && ultimo.tipo === 'ok') pasos.push({ fase: 'Reválida', texto: 'Espera rival en la etapa siguiente', tipo: 'actual' });
+  return pasos;
+}
