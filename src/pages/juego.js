@@ -13,7 +13,7 @@ export function juego(slug, navegar) {
     titulo: `${j.titulo} · Latabla`,
     html: `
     <section class="juego-pag ${JUGABLES[slug] ? 'juego-pag--jugable' : ''}">
-      <a href="/" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
+      <a href="/juegos" data-link class="volver">${icon('back', 18)}Volver a los juegos</a>
       <div class="juego-pag__cab">
         <span class="juego-pag__icono">${icon(j.icono, 34)}</span>
         <h1 class="titulo-grande">${j.titulo}</h1>
@@ -37,7 +37,7 @@ export function juego(slug, navegar) {
     montar() {
       if (JUGABLES[slug]) JUGABLES[slug](document.getElementById('juego-raiz'));
       document.querySelectorAll('[data-estado]').forEach((b) =>
-        b.addEventListener('click', () => { guardarEstado(j.slug, b.dataset.estado); navegar('/'); })
+        b.addEventListener('click', () => { guardarEstado(j.slug, b.dataset.estado); navegar('/juegos'); })
       );
     },
   };

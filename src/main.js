@@ -33,12 +33,13 @@ const rutaActual = () =>
 function simple(titulo, texto) {
   return {
     titulo: `${titulo} · Latabla`,
-    html: `<section class="simple"><h1 class="titulo-grande">${titulo}</h1><p>${texto}</p><a href="/" data-link class="btn-principal">Ir a la tabla de hoy</a></section>`,
+    html: `<section class="simple"><h1 class="titulo-grande">${titulo}</h1><p>${texto}</p><a href="/juegos" data-link class="btn-principal">Ir a los juegos</a></section>`,
   };
 }
 
 function resolver(path) {
-  if (path === '/') return home();
+  if (path === '/') return primera();
+  if (path === '/juegos') return home();
   let m;
   if ((m = path.match(/^\/tablas\/([\w-]+)(?:\/([\w-]+))?$/))) {
     const [, g, sub] = m;

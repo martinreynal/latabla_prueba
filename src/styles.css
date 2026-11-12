@@ -307,7 +307,8 @@ a.tile:active { transform: translateY(0); }
 @media (min-width: 900px) {
   :root { --menu-ancho: 340px; }
   body { padding-bottom: 0; }
-  .header { height: 68px; padding: 0 28px; }
+  .header { height: 68px; padding: 0 28px; justify-content: flex-start; gap: 12px; }
+  .header .racha { margin-left: auto; }
   .logo { font-size: 24px; }
   .tabs {
     top: env(safe-area-inset-top, 0px); bottom: auto; left: 50%; right: auto; transform: translateX(-50%);

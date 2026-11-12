@@ -11,7 +11,7 @@ export function menu() {
     </div>
 
     <div class="menu__grupo">
-      <a href="/tablas/primera" data-link class="menu__item menu__item--seccion" data-seccion="tablas">${icon('tabla', 22)}Tablas</a>
+      <a href="/" data-link class="menu__item menu__item--seccion" data-seccion="tablas">${icon('tabla', 22)}Tablas</a>
       <div class="menu__sub solo-tablas">
         ${ESTRUCTURA.map((g) => g.subs.length === 0 ? `
           <a href="/tablas/${g.slug}" data-link class="menu__item menu__item--div" data-ruta="/tablas/${g.slug}" data-grupo="${g.slug}">
@@ -25,15 +25,15 @@ export function menu() {
             </div>
           </details>`).join('')}
       </div>
-      <a href="/" data-link class="menu__item menu__item--seccion" data-seccion="juegos">${icon('grilla', 22)}Juegos</a>
+      <a href="/juegos" data-link class="menu__item menu__item--seccion" data-seccion="juegos">${icon('grilla', 22)}Juegos</a>
     </div>
 
     <p class="menu__pie solo-tablas">${import.meta.env.MODE === 'artifact' ? '<span class="punto-vivo punto-vivo--apagado"></span> Vista previa con datos de ejemplo · ' : '<span class="punto-vivo"></span> Primera, Nacional y B en vivo (ESPN) · '}<a href="/admin" data-link class="menu__admin">Cargar resultados</a></p>
   </nav>
 
   <nav class="tabs" aria-label="Secciones">
-    <a href="/tablas/primera" data-link class="tabs__item" data-seccion="tablas">${icon('tabla', 22)}<span>Tablas</span></a>
-    <a href="/" data-link class="tabs__item" data-seccion="juegos">${icon('grilla', 22)}<span>Juegos</span></a>
+    <a href="/" data-link class="tabs__item" data-seccion="tablas">${icon('tabla', 22)}<span>Tablas</span></a>
+    <a href="/juegos" data-link class="tabs__item" data-seccion="juegos">${icon('grilla', 22)}<span>Juegos</span></a>
   </nav>`;
 }
 
@@ -78,6 +78,7 @@ export function cerrarMenu() {
 }
 
 export function marcarRutaActiva(path) {
+  if (path === '/') path = '/tablas/primera'; // la portada es la tabla de Primera
   const seccion = path.startsWith('/tablas') || path.startsWith('/equipo') ? 'tablas' : 'juegos';
   document.body.dataset.seccion = seccion;
   document.querySelectorAll('.tabs__item, .menu__item--seccion').forEach((a) => {
