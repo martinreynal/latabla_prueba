@@ -59,16 +59,24 @@ const BUSQUEDA = {
   'fed-guillermo-brown': ['Guillermo Brown'],
 };
 async function buscar(t) {
-  const r = await fetch(`https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t=${encodeURIComponent(t)}`);
-  if (!r.ok) return [];
-  return ((await r.json()).teams ?? []).filter((x) => x.strSport === 'Soccer' && x.strCountry === 'Argentina' && x.strBadge);
+  for (let intento = 1; intento <= 4; intento++) {
+    const r = await fetch(`https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t=${encodeURIComponent(t)}`);
+    if (r.ok) {
+      const texto = await r.text();
+      try { return (JSON.parse(texto).teams ?? []).filter((x) => x.strSport === 'Soccer' && x.strCountry === 'Argentina' && x.strBadge); } catch { /* respuesta no JSON: límite */ }
+    }
+    console.log(`límite de TheSportsDB (${r.status}) buscando "${t}", espero 65 s`);
+    await esperar(65000);
+  }
+  return [];
 }
 for (const c of CLUBES_FEDERAL) {
+  if (manifiesto[c.id]) continue; // ya descargado
   const terminos = BUSQUEDA[c.id] ?? [c.nombre.replace(/\s*\(.*\)/, '')];
   let elegido = null;
   for (const t of terminos) {
     const lista = await buscar(t);
-    await esperar(2500); // la clave pública admite ~30 consultas por minuto
+    await esperar(4000); // la clave pública admite pocas consultas por minuto
     elegido = lista.find((x) => /federal/i.test(x.strLeague ?? '')) ?? lista.find((x) => norm(x.strTeam) === norm(t)) ?? null;
     if (elegido) break;
   }
