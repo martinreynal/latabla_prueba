@@ -1,0 +1,39 @@
+name: Resultados AFA
+
+# Lee las notas de afa.com.ar (Reserva y juveniles) y actualiza src/data/afa.json.
+on:
+  schedule:
+    - cron: '23 3,15 * * *'   # 00:23 y 12:23 en Argentina
+  workflow_dispatch:
+    inputs:
+      completo:
+        description: 'Recorrer toda la temporada (1) o solo lo reciente (0)'
+        default: '0'
+  push:
+    branches: [main]
+    paths: [scripts/afa/**, .github/workflows/afa.yml]
+
+permissions:
+  contents: write
+
+concurrency: afa
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Leer AFA
+        run: node scripts/afa/actualizar.mjs
+        env:
+          AFA_COMPLETO: ${{ github.event_name == 'push' && '1' || inputs.completo || '0' }}
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add data/afa src/data/afa.json
+          git diff --cached --quiet || git commit -m "AFA: resultados actualizados"
+          git pull --rebase -q && git push
