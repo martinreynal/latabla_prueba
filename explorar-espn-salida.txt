@@ -1,0 +1,27 @@
+20261114 arg.1 200 0 Argentine Liga Profesional de Fútbol
+20261114 arg.2 200 5 Argentine Nacional B
+20261114 arg.3 200 4 Argentine Primera B
+20261114 arg.4 200 0 Argentine Primera C
+20261114 arg.5 200 0 Argentine Primera D
+20261114 arg.copa 200 1 Copa Argentina
+20261114 arg.supercopa 200 0 Argentine Supercopa
+20261114 arg.trofeo 400 
+20261114 conmebol.libertadores 200 0 CONMEBOL Libertadores
+20261114 conmebol.sudamericana 200 0 CONMEBOL Sudamericana
+20261114 conmebol.recopa 200 0 CONMEBOL Recopa
+20261114 fifa.friendly 200 7 International Friendly
+20261114 fifa.worldq.conmebol 200 0 FIFA World Cup Qualifying - CONMEBOL
+20261115 arg.1 200 0 Argentine Liga Profesional de Fútbol
+20261115 arg.2 200 3 Argentine Nacional B
+20261115 arg.3 200 0 Argentine Primera B
+20261115 arg.4 200 0 Argentine Primera C
+20261115 arg.5 200 0 Argentine Primera D
+20261115 arg.copa 200 0 Copa Argentina
+20261115 arg.supercopa 200 0 Argentine Supercopa
+20261115 arg.trofeo 400 
+20261115 conmebol.libertadores 200 0 CONMEBOL Libertadores
+20261115 conmebol.sudamericana 200 0 CONMEBOL Sudamericana
+20261115 conmebol.recopa 200 0 CONMEBOL Recopa
+20261115 fifa.friendly 200 1 International Friendly
+20261115 fifa.worldq.conmebol 200 0 FIFA World Cup Qualifying - CONMEBOL
+explorar-espn/arg.2-20261114.json {"date": "2026-11-14T18:00Z", "name": "Estudiantes (Buenos Aires) at Atlanta", "status": {"clock": 180.0, "displayClock": "3'", "period": 1, "type": {"id": "25", "name": "STATUS_FIRST_HALF", "state": "in", "completed": false, "description": "First Half", "detail": "3'", "shortDetail": "3'"}}, "venue": "Don León Kolbovsky", "comp": [{"ha": "home", "score": "0", "team": {"id": "10146", "displayName": "Atlanta", "shortDisplayName": "Atlanta", "abbreviation": "ATL", "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/10146.png"}}, {"ha": "away", "score": "0", "team": {"id": "17352", "displayName": "Estudiantes (Buenos Aires)", "shortDisplayName": "Estudiantes ", "abbreviation": "EST", "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/17352.png"}}]}
