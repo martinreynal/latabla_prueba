@@ -1,4 +1,6 @@
 import { REGIONES, REGIONAL_ACTUALIZADO } from '../data/regional-real.js';
+import LLAVES from '../data/regional-llaves.json';
+import { haceCuanto } from '../lib/vivo.js';
 import { PRIMERAC, PRIMERAC_ACTUALIZADO, FINAL_C, REDUCIDO_C } from '../data/primerac-real.js';
 import { escudoMini } from '../lib/escudos.js';
 import { ordenar } from '../lib/reglas-federal.js';
@@ -10,6 +12,7 @@ import { irA } from '../data/estructura.js';
 let torneo = 'primerac';
 let vistaC = 'posiciones';
 let region = 0;
+let vistaR = 'eliminatorias';
 
 /* ---------- Primera C (datos reales, cargados a mano) ---------- */
 const sitC = (pos, total) => (pos === 1 ? 'ascenso' : pos <= 7 ? 'reducido' : pos === total ? 'descenso' : 'neutro');
@@ -79,6 +82,34 @@ function vistaPrimeraC() {
 }
 
 /* ---------- Regional Amateur (primera ronda real, transcripta) ---------- */
+function serieRegional(s, i) {
+  const fin = !!s.ganador;
+  const gana = (lado) => (s.ganador === lado ? 'serie__eq--gana' : '');
+  const lado = (nombre, g, l) => `<div class="serie__eq serie__eq--libre ${gana(l)}"><span class="cruce__nombre">${nombre ?? 'A confirmar'}</span>${g != null ? `<span class="cruce__pts">${g}</span>` : ''}</div>`;
+  const [ga, gb] = s.global ?? [null, null];
+  const partidos = s.partidos.map((p) => `${p.tipo}: ${p.local} ${p.gl ?? '–'}-${p.gv ?? '–'} ${p.visitante}${p.gl === null && p.estado && p.estado !== 'FINAL' ? ` (${p.estado})` : ''}`).join(' · ');
+  const pie = fin ? `Global <strong>${ga}–${gb}</strong>${s.penales ? ` · penales ${s.penales[0]}–${s.penales[1]}` : ''} · pasa ${s.ganador === 'a' ? s.a : s.b}`
+    : s.global ? `En juego · global <strong>${ga}–${gb}</strong>` : 'Por jugar';
+  return `<div class="serie ${fin ? '' : 'serie--pend'}" title="${partidos.replace(/"/g, '&quot;')}">
+    <span class="serie__n">Serie ${i + 1}</span>${lado(s.a, ga, 'a')}${lado(s.b, gb, 'b')}
+    <p class="serie__global">${pie}</p>
+    <p class="serie__rev">${partidos}</p></div>`;
+}
+
+function eliminatorias(reg) {
+  const rondas = LLAVES.rondas.filter((r) => r.regiones[reg.nombre]?.length);
+  if (!rondas.length) return '<p class="aviso">Todavía no hay rondas eliminatorias cargadas para esta región.</p>';
+  return rondas.slice().reverse().map((r) => {
+    const series = r.regiones[reg.nombre];
+    const pend = series.filter((x) => !x.ganador).length;
+    return `
+    <section class="hoy">
+      <div class="hoy__cab"><h2 class="hoy__titulo">${r.nombre}</h2>${pend ? `<span class="provisorio">${pend === series.length && !series.some((x) => x.global) ? 'Por jugar' : 'En juego'}</span>` : ''}</div>
+      <div class="reducido__grilla">${series.map(serieRegional).join('')}</div>
+    </section>`;
+  }).join('') + `<p class="aviso aviso--chico">Resultados de Ascenso del Interior, actualizados automáticamente ${haceCuanto(LLAVES.actualizado)}. Los nombres de los clubes aparecen como los escribe la fuente.</p>`;
+}
+
 function vistaRegional() {
   const reg = REGIONES[region];
   const sit = (pos, e) => (e.pasa === 'tercera' ? 'ascenso' : e.pasa === 'segunda' ? 'reducido' : 'neutro');
@@ -89,9 +120,9 @@ function vistaRegional() {
   return `
     <p class="formato-resumen"><strong>El torneo más grande del país.</strong> Organizado por el Consejo Federal para clubes que llegan desde las ligas del interior, dividido en ocho regiones. Da ascensos al Federal A 2027.</p>
     <div class="camino-simple" aria-label="Cómo se juega">
-      <div class="camino-simple__paso camino-simple__paso--hecho"><strong>Primera ronda</strong><span>Zonas por región · terminada</span></div>
+      <div class="camino-simple__paso"><strong>Primera ronda</strong><span>Zonas por región · terminada</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
-      <div class="camino-simple__paso"><strong>Rondas eliminatorias</strong><span>Mano a mano, ida y vuelta</span></div>
+      <div class="camino-simple__paso camino-simple__paso--hecho"><strong>Rondas eliminatorias</strong><span>Mano a mano, ida y vuelta · en juego</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
       <div class="camino-simple__paso"><strong>Final de cada región</strong><span>Etapa final nacional</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
@@ -100,12 +131,14 @@ function vistaRegional() {
     <div class="anios anios--regiones" role="tablist" aria-label="Región">
       ${REGIONES.map((r, i) => `<button type="button" role="tab" class="anio ${i === region ? 'activa' : ''}" aria-selected="${i === region}" data-region="${i}">${r.nombre}</button>`).join('')}
     </div>
+    ${pestanas([['eliminatorias', 'Eliminatorias'], ['zonas', 'Primera ronda']], vistaR, 'data-vr')}
+    ${vistaR === 'eliminatorias' ? eliminatorias(reg) : `
     <p class="fase-actual">Región ${reg.nombre}: <strong>${reg.zonas.length} zonas</strong> · ${reg.zonas.reduce((n, z) => n + z.tabla.length, 0)} equipos · tablas finales de la primera ronda</p>
     ${leyenda(ley)}
     <div class="cuatro-tablas cuatro-tablas--3">
       ${reg.zonas.map((z) => tabla(z.nombre, z.tabla, sit, { compacta: true, extra: [{ th: 'DG', td: (e) => (e.dg > 0 ? `+${e.dg}` : e.dg), opc: true }] })).join('')}
     </div>
-    <p class="aviso aviso--chico">Datos de la primera ronda transcriptos de las tablas que publica Ascenso del Interior, al ${REGIONAL_ACTUALIZADO}. En algunas regiones también clasificaron los mejores segundos o terceros. Las rondas eliminatorias todavía no están cargadas.</p>`;
+    <p class="aviso aviso--chico">Datos de la primera ronda transcriptos de las tablas que publica Ascenso del Interior, al ${REGIONAL_ACTUALIZADO}. En algunas regiones también clasificaron los mejores segundos o terceros. </p>`}`;
 }
 
 export function cuarta(sub) {
@@ -128,6 +161,7 @@ export function cuarta(sub) {
         cont.innerHTML = torneo === 'regional' ? vistaRegional() : vistaPrimeraC();
         sel.querySelectorAll('[data-torneo]').forEach((b) => b.addEventListener('click', () => irA(`/tablas/cuarta/${b.dataset.torneo === 'regional' ? 'regional-amateur' : 'primera-c'}`)));
         cont.querySelectorAll('[data-vc]').forEach((b) => b.addEventListener('click', () => { vistaC = b.dataset.vc; pintar(); }));
+        cont.querySelectorAll('[data-vr]').forEach((b) => b.addEventListener('click', () => { vistaR = b.dataset.vr; pintar(); }));
         cont.querySelectorAll('[data-region]').forEach((b) => b.addEventListener('click', () => { region = Number(b.dataset.region); pintar(); }));
       };
       pintar();

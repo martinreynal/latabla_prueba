@@ -1468,3 +1468,4 @@ a.tile:active { transform: translateY(0); }
 .pen__msg { font-size: clamp(14px, 5.2cqw, 34px); white-space: normal; text-align: center; width: max-content; max-width: 92%; line-height: 1.1; }
 .camino-simple__paso--hecho { border-color: var(--violeta-claro); }
 .camino-simple__paso--hecho span { color: var(--amarillo); }
+.serie .serie__rev { margin: 0; padding: 0 10px 8px; font-size: 11px; color: var(--blanco-2); line-height: 1.35; }
