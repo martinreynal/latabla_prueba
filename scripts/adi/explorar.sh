@@ -1,21 +1,17 @@
 #!/bin/bash
-# Exploración temporal: notas del Torneo Regional (rondas eliminatorias) en ascensodelinterior.com.ar.
+# Exploración temporal: páginas de resultados del Torneo Regional (TDI) en ascensodelinterior.com.ar.
 set -u
-mkdir -p explorar-adi/notas explorar-adi/img
+mkdir -p explorar-adi/res
 UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
-B=https://www.ascensodelinterior.com.ar
-: > explorar-adi/links.txt
-for p in "" "/2" "/3" "/4" "/5" "/6" "/7" "/8"; do
-  curl -sL -A "$UA" "$B/etiquetas/321/torneo-regional$p" -o explorar-adi/et.html
-  grep -oE 'href="/noticias/[0-9]+/[^"]+"' explorar-adi/et.html | sed 's/href="//;s/"$//;s#/$##' >> explorar-adi/links.txt
-  sleep 1
-done
-sort -u explorar-adi/links.txt | grep -iE 'ronda|final|regin|regional' > explorar-adi/rondas.txt
-wc -l explorar-adi/rondas.txt
+B=https://ascensodelinterior.com.ar
+curl -sL -A "$UA" "$B/tdi/resultados/" -o explorar-adi/res/indice.html
+grep -oE 'href="[^"]*tdi/resultados/[0-9]+/[^"]*"' explorar-adi/res/indice.html | sed 's/href="//;s/"$//' | sort -u > explorar-adi/res/links.txt
+echo "https://ascensodelinterior.com.ar/tdi/resultados/219/torneo-regional-2026---tercera-ronda-(ida-y-vuelta)/" >> explorar-adi/res/links.txt
+sort -u explorar-adi/res/links.txt | grep -i "2026" > explorar-adi/res/links26.txt
+cat explorar-adi/res/links26.txt
 while read -r u; do
-  f="explorar-adi/notas/$(basename "$u" | cut -c1-90).html"
-  curl -sL -A "$UA" "$B$u/" -o "$f"; sleep 0.7
-done < explorar-adi/rondas.txt
-# Imágenes del cuerpo de las notas (si las hay)
-grep -ohE 'https://i\.imgur\.com/[A-Za-z0-9]+\.(jpeg|jpg|png)' explorar-adi/notas/*.html | sort -u > explorar-adi/imgs.txt
-wc -l explorar-adi/imgs.txt
+  case "$u" in http*) url="$u";; *) url="$B$u";; esac
+  n=$(echo "$u" | grep -oE 'resultados/[0-9]+' | cut -d/ -f2)
+  curl -sL -A "$UA" "$url" -o "explorar-adi/res/r-$n.html"; sleep 0.7
+done < explorar-adi/res/links26.txt
+ls -la explorar-adi/res
