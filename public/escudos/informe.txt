@@ -86,4 +86,5 @@ ok   espn-17697 Defensores Unidos
 ok   espn-10147 Brown de Adrogué
 ok   espn-17705 UAI Urquiza
 ok   espn-10105 Ituzaingó
-ok   fed-sol-de-america Sol de América ← Sol de América de Formosa (Argentina Torneo Federal A)
+ok   copa-claypole Claypole ← Claypole (Argentinian Primera C)
+ok   copa-sportivo-barracas Sportivo Barracas ← Sportivo Barracas (Argentinian Primera C)
