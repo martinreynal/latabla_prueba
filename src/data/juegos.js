@@ -3,7 +3,7 @@
 // activo: false lo muestra como "Pronto" y no se puede entrar.
 export const JUEGOS = [
   { slug: 'penales', nombre: 'Penales', titulo: 'Penales Copa Argentina', icono: 'pen', activo: true,
-    descripcion: 'Elegí tu equipo y definí la tanda: pateás y atajás.' },
+    descripcion: 'Elegí tu club, mirá el sorteo y ganá seis tandas para ser campeón.' },
   { slug: 'tu-carrera', nombre: 'Tu Carrera', titulo: 'Tu Carrera', icono: 'carrera', activo: true,
     descripcion: 'Llevá la carrera de un jugador, al estilo New Star Soccer.' },
   { slug: 'el-dt', nombre: 'El DT', titulo: 'El DT', icono: 'dt', activo: true,

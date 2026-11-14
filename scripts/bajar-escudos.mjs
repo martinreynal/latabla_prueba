@@ -86,6 +86,16 @@ for (const c of CLUBES_FEDERAL) {
   catch (err) { log.push(`FALLA ${c.id} ${c.nombre}: ${err.message}`); }
 }
 
+// ---------- Copa Argentina: clubes que no están en las ligas anteriores ----------
+for (const [id, nombre, terminos] of [['copa-claypole', 'Claypole', ['Claypole', 'Club Atletico Claypole']], ['copa-sportivo-barracas', 'Sportivo Barracas', ['Sportivo Barracas']]]) {
+  if (manifiesto[id]) continue;
+  let elegido = null;
+  for (const t of terminos) { const lista = await buscar(t); await esperar(4000); elegido = lista[0] ?? null; if (elegido) break; }
+  if (!elegido) { log.push(`FALTA ${id} ${nombre}`); continue; }
+  try { await guardar(id, elegido.strBadge); log.push(`ok   ${id} ${nombre} ← ${elegido.strTeam} (${elegido.strLeague})`); }
+  catch (err) { log.push(`FALLA ${id} ${nombre}: ${err.message}`); }
+}
+
 const ordenado = Object.fromEntries(Object.entries(manifiesto).sort(([a], [b]) => a.localeCompare(b)));
 await fs.writeFile(MANIFIESTO, `${JSON.stringify(ordenado, null, 2)}\n`);
 await fs.writeFile(`${DIR}/informe.txt`, `${log.join('\n')}\n`);
