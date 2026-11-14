@@ -1,5 +1,6 @@
 import { icon } from '../lib/icons.js';
 import { ESTRUCTURA } from '../data/estructura.js';
+import { etiquetaHoy } from '../pages/partidos.js';
 
 export function menu() {
   return `
@@ -35,6 +36,7 @@ export function menu() {
   <nav class="tabs" aria-label="Secciones">
     <a href="/" data-link class="tabs__item" data-seccion="tablas">${icon('tabla', 22)}<span>Tablas</span></a>
     <a href="/juegos" data-link class="tabs__item" data-seccion="juegos">${icon('grilla', 22)}<span>Juegos</span></a>
+    <a href="/partidos" data-link class="tabs__item" data-seccion="partidos">${icon('calendar', 22)}<span>Partidos <small class="tabs__fecha" id="tabs-fecha">(${etiquetaHoy()})</small></span></a>
   </nav>`;
 }
 
@@ -80,7 +82,9 @@ export function cerrarMenu() {
 
 export function marcarRutaActiva(path) {
   if (path === '/') path = '/tablas/primera'; // la portada es la tabla de Primera
-  const seccion = path.startsWith('/tablas') || path.startsWith('/equipo') ? 'tablas' : path.startsWith('/seleccion') ? 'seleccion' : 'juegos';
+  const seccion = path.startsWith('/tablas') || path.startsWith('/equipo') ? 'tablas' : path.startsWith('/seleccion') ? 'seleccion' : path.startsWith('/partidos') ? 'partidos' : 'juegos';
+  const f = document.getElementById('tabs-fecha');
+  if (f) f.textContent = `(${etiquetaHoy()})`; // si la página quedó abierta de un día para otro
   document.body.dataset.seccion = seccion;
   document.querySelectorAll('.tabs__item, .menu__item--seccion').forEach((a) => {
     const activa = a.dataset.seccion === seccion;

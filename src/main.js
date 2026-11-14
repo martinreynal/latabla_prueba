@@ -8,6 +8,7 @@ import { nacional } from './pages/nacional.js';
 import { copas } from './pages/copas.js';
 import { conmebol } from './pages/conmebol.js';
 import { seleccion } from './pages/seleccion.js';
+import { partidos } from './pages/partidos.js';
 import { tercera } from './pages/tercera.js';
 import { copaArgentina } from './pages/copa-argentina.js';
 import { cuarta } from './pages/cuarta.js';
@@ -43,6 +44,7 @@ function resolver(path) {
   if (path === '/') return primera();
   if (path === '/juegos') return home();
   if (path === '/seleccion') return seleccion();
+  if (path === '/partidos') return partidos();
   let m;
   if ((m = path.match(/^\/tablas\/([\w-]+)(?:\/([\w-]+))?$/))) {
     const [, g, sub] = m;

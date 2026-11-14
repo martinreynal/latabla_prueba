@@ -138,7 +138,7 @@ body[data-seccion="juegos"] .solo-tablas { display: none; }
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
   height: calc(64px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   background: linear-gradient(180deg, #1C1B1F 0%, #111111 100%);
   border-top: 1px solid var(--violeta);
 }
@@ -293,7 +293,7 @@ a.tile:active { transform: translateY(0); }
   .logo { font-size: 24px; }
   .tabs {
     top: env(safe-area-inset-top, 0px); bottom: auto; left: 50%; right: auto; transform: translateX(-50%);
-    width: 320px; height: 68px; padding: 0; border: 0; background: transparent; z-index: 12;
+    width: 500px; height: 68px; padding: 0; border: 0; background: transparent; z-index: 12;
   }
   .tabs__item { flex-direction: row; gap: 8px; font-size: 12px; }
   .tabs__item.activo::before { top: auto; bottom: 0; }
@@ -1614,3 +1614,49 @@ a.tile:active { transform: translateY(0); }
 @media (min-width: 900px) {
   .vista:has(.tabla-pag--conmebol), .vista:has(.sel) { max-width: 1400px; }
 }
+
+/* ===== Partidos del día ===== */
+.tabs__fecha { font-size: .92em; font-weight: 700; color: inherit; opacity: .85; }
+.pt { display: flex; flex-direction: column; gap: 14px; }
+.pt__dias { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pt__dias .btn-categoria { margin: 0; align-self: auto; }
+.pt__fecha { margin: 0 8px; flex: 1 1 auto; font-family: var(--f-display); font-variation-settings: "wdth" 115; font-stretch: 115%; font-weight: 800; font-size: clamp(16px, 2vw, 22px); text-transform: uppercase; color: var(--amarillo); }
+.pt__resumen { margin: 0; color: var(--blanco-2); font-size: 14px; }
+.pt__resumen strong { color: var(--blanco); }
+.pt__vivos { color: #ff6b5e; font-weight: 700; }
+.pt__grupo { display: flex; flex-direction: column; }
+.pt__lista { list-style: none; margin: 0; padding: 0; border: 1px solid var(--borde); border-radius: 0 var(--radio) var(--radio); overflow: hidden; background: var(--gris-2); }
+.pt__fila { display: grid; grid-template-columns: 110px minmax(0, 1fr) 96px minmax(0, 1fr); grid-template-areas: "estado local marcador visita" ". info info info"; align-items: center; gap: 2px 12px; padding: 10px 14px; border-top: 1px solid var(--borde); }
+.pt__fila:first-child { border-top: 0; }
+.pt__fila--vivo { background: rgba(216,54,43,.08); }
+.pt__estado { grid-area: estado; display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-display); font-weight: 800; font-size: 14px; color: var(--blanco-2); }
+.pt__estado--pre { color: var(--blanco); }
+.pt__estado--vivo { color: #ff6b5e; }
+.pt__estado--fin { color: var(--blanco-2); font-size: 12px; text-transform: uppercase; }
+.pt__estado--susp { color: #e3a35a; font-size: 12px; text-transform: uppercase; }
+.pt__punto { width: 8px; height: 8px; border-radius: 50%; background: #ff3b2f; display: inline-block; animation: pt-latido 1.2s ease-in-out infinite; }
+@keyframes pt-latido { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pt__punto { animation: none; } }
+.pt__eq { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 600; font-size: 15px; }
+.pt__eq--loc { grid-area: local; justify-content: flex-end; text-align: right; }
+.pt__eq--der { grid-area: visita; }
+.pt__eq--gana { font-weight: 800; color: var(--amarillo); }
+.pt__nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt__escudo { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+.pt__escudo--vacio { display: inline-block; border-radius: 50%; background: var(--gris-3); }
+.pt__marcador { grid-area: marcador; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 6px; font-family: var(--f-display); font-weight: 800; }
+.pt__marcador b { min-width: 30px; padding: 2px 0; text-align: center; border-radius: 3px; background: #f4f4f4; color: #111; font-size: 17px; }
+.pt__fila--vivo .pt__marcador b { background: #ff6b5e; color: #fff; }
+.pt__vs { color: var(--blanco-2); font-size: 13px; text-transform: uppercase; }
+.pt__pen { flex-basis: 100%; text-align: center; font-size: 11px; color: var(--blanco-2); font-family: var(--f-texto); white-space: nowrap; }
+.pt__info { grid-area: info; text-align: center; font-size: 12px; color: var(--blanco-2); }
+@media (max-width: 640px) {
+  .pt__fila { grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr); grid-template-areas: "estado estado estado" "local marcador visita" "info info info"; padding: 10px; }
+  .pt__estado { justify-content: center; }
+  .pt__eq { font-size: 13.5px; gap: 6px; }
+  .pt__escudo { width: 22px; height: 22px; }
+  .tabs__item { font-size: 10px; }
+  .pt__fecha { order: -1; flex-basis: 100%; margin: 0; }
+  .pt__dias .btn-categoria { flex: 1 1 0; justify-content: center; }
+}
+@media (min-width: 900px) { .vista:has(.pt) { max-width: 1100px; } }
