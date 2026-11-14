@@ -1,13 +1,12 @@
 #!/bin/bash
-# Exploración temporal de ascensodelinterior.com.ar: baja la página de tablas y lo que referencia.
+# Exploración temporal: baja las imágenes de las tablas de la primera ronda del Regional Amateur.
 set -u
-mkdir -p explorar-adi
+mkdir -p explorar-adi/img
 UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
-B=https://www.ascensodelinterior.com.ar
-curl -sL -A "$UA" -D explorar-adi/headers.txt "$B/tabla-de-posiciones/5/torneo-federal-c/" -o explorar-adi/tabla-5.html
-curl -sL -A "$UA" "$B/robots.txt" -o explorar-adi/robots.txt
-curl -sL -A "$UA" "$B/" -o explorar-adi/home.html
-grep -oE '(src|href)="[^"]+\.js[^"]*"' explorar-adi/tabla-5.html | sed 's/.*="//;s/"$//' | head -20 > explorar-adi/scripts.txt
-grep -oE "https?://[^\"' ]*(api|json|ajax)[^\"' ]*" explorar-adi/tabla-5.html | sort -u > explorar-adi/apis.txt
-grep -oE 'href="[^"]*tabla-de-posiciones[^"]*"' explorar-adi/*.html | sort -u > explorar-adi/links-tablas.txt
-ls -la explorar-adi; wc -c explorar-adi/*.html
+grep -oE 'https://i\.imgur\.com/[A-Za-z0-9]+\.(jpeg|jpg|png)' explorar-adi/tabla-5.html | awk '!v[$0]++' > explorar-adi/imagenes.txt
+n=0
+for r in norte litoral-norte litoral-sur centro cuyo pampeana-norte pampeana-sur patagonia; do
+  n=$((n+1)); u=$(sed -n "${n}p" explorar-adi/imagenes.txt)
+  curl -sL -A "$UA" -e "https://www.ascensodelinterior.com.ar/" "$u" -o "explorar-adi/img/$n-$r.jpg"
+  file "explorar-adi/img/$n-$r.jpg"
+done
