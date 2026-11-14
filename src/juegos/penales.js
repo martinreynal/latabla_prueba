@@ -1,7 +1,6 @@
 // Penales Copa Argentina: elegís uno de los 64 clubes, se sortea el cuadro y jugás hasta seis tandas de penales.
 // Este archivo solo ordena las pantallas. La lógica está en copa-logica.js y penales-logica.js,
 // la tanda jugable en penales-tanda.js y el cuadro en copa-cuadro.js.
-import { guardarEstado } from '../lib/progreso.js';
 import { EQUIPOS_COPA, CATEGORIAS, equipoCopa } from '../data/copa-equipos.js';
 import { RONDAS, nuevaCopa, cerrarRonda, partidoDe, rivalDe, cargarCopa, guardarCopa, borrarCopa } from './copa-logica.js';
 import { htmlCuadro, activarCuadro, trofeo } from './copa-cuadro.js';
@@ -176,7 +175,6 @@ export function montarPenales(raiz) {
         cerrarRonda(copa, fuerza);
         guardar();
         if (copa.estado === 'cuadro') return cuadro();
-        guardarEstado('penales', copa.estado === 'campeon' ? 'resuelto' : 'fallado');
         cierre();
       },
     });

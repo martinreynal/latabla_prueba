@@ -1,6 +1,5 @@
 import { icon } from '../lib/icons.js';
 import { JUEGOS } from '../data/juegos.js';
-import { estadoJuego, guardarEstado } from '../lib/progreso.js';
 import { montarPenales } from '../juegos/penales.js';
 
 const JUGABLES = { penales: montarPenales };
@@ -21,24 +20,11 @@ export function juego(slug, navegar) {
       </div>
       ${JUGABLES[slug] ? '<div id="juego-raiz"></div>' : `
       <div class="juego-pag__area">
-        <p>${j.activo ? 'Acá va el juego. Lo construimos en el próximo paso.' : 'Este juego llega pronto.'}</p>
+        <p>${j.activo ? 'Este juego está en desarrollo.' : 'Este juego llega pronto.'}</p>
       </div>`}
-      ${j.activo && !JUGABLES[slug] ? `
-      <div class="modo-prueba">
-        <p>Modo prueba: marcá un resultado para ver cómo cambia el cuadrante en la home.</p>
-        <div class="modo-prueba__btns">
-          <button type="button" data-estado="resuelto">Marcar resuelto</button>
-          <button type="button" data-estado="fallado">Marcar fallado</button>
-          <button type="button" data-estado="pendiente">Volver a pendiente</button>
-        </div>
-        <p class="modo-prueba__actual">Estado actual: <strong>${estadoJuego(j.slug)}</strong></p>
-      </div>` : ''}
     </section>`,
     montar() {
       if (JUGABLES[slug]) JUGABLES[slug](document.getElementById('juego-raiz'));
-      document.querySelectorAll('[data-estado]').forEach((b) =>
-        b.addEventListener('click', () => { guardarEstado(j.slug, b.dataset.estado); navegar('/juegos'); })
-      );
     },
   };
 }

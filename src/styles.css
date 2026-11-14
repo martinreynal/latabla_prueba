@@ -182,18 +182,8 @@ body[data-seccion="juegos"] .solo-tablas { display: none; }
 /* ===== Home ===== */
 .home { display: flex; flex-direction: column; gap: 18px; }
 .home__intro { display: flex; flex-direction: column; gap: 10px; }
-.home__fecha {
-  margin: 0; align-self: flex-start;
-  padding: 5px 10px; border-radius: 2px;
-  background: var(--placa); box-shadow: var(--brillo), var(--sombra);
-  font-size: 13px; font-weight: 600; color: var(--blanco);
-}
 .home__resumen { margin: 0; color: var(--blanco-2); }
 .home__resumen strong { color: var(--amarillo); font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; }
-.progreso { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; margin: 2px 0 6px; }
-.progreso__seg { height: 5px; background: var(--gris-3); }
-.progreso__seg--resuelto { background: var(--amarillo); }
-.progreso__seg--fallado { background: var(--violeta-claro); }
 
 .grilla-juegos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .tile {
@@ -217,12 +207,7 @@ a.tile:active { transform: translateY(0); }
 .tile--pendiente { background: var(--placa); border-color: rgba(255,255,255,.22); color: var(--blanco); box-shadow: var(--brillo), var(--sombra); }
 .tile--pendiente .tile__estado { background: var(--amarillo); color: var(--negro); }
 /* Resuelto: placa oscura con marco amarillo */
-.tile--resuelto { background: var(--placa-oscura); border-color: var(--amarillo); color: var(--blanco); box-shadow: var(--brillo), var(--sombra); }
-.tile--resuelto .tile__icono { color: var(--amarillo); }
-.tile--resuelto .tile__estado { background: transparent; color: var(--amarillo); border: 1px solid var(--amarillo); }
 /* Fallado: placa oscura apagada */
-.tile--fallado { background: var(--gris-2); border-color: var(--violeta-osc); color: var(--blanco-2); }
-.tile--fallado .tile__estado { background: var(--violeta-osc); color: var(--blanco); }
 /* Próximamente */
 .tile--pronto { background: transparent; border-color: var(--gris-3); border-style: dashed; color: #8E8B84; }
 .tile--pronto .tile__estado { background: var(--gris); color: var(--blanco-2); }

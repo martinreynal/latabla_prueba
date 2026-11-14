@@ -83,3 +83,6 @@ window.addEventListener('popstate', rutear);
 document.addEventListener('latabla:navegar', (e) => navegar(e.detail));
 if (HASH) window.addEventListener('hashchange', rutear);
 Promise.allSettled([cargarPartidos(), cargarVivo()]).finally(rutear);
+
+// Limpieza: versiones anteriores guardaban qué juegos se habían jugado en el día.
+try { localStorage.removeItem('latabla:progreso'); } catch { /* sin almacenamiento */ }
