@@ -1317,3 +1317,51 @@ a.tile:active { transform: translateY(0); }
 .perfil__escudo--img img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .tabla--nacional td.equipo .escudo-mini + .eq-link { display: inline-block; max-width: calc(100% - 26px); vertical-align: middle; }
 .tabla--nacional td.equipo .escudo-mini { vertical-align: middle; }
+
+/* ---------- Penales Copa Argentina (versión con elección de equipo) ---------- */
+.pen [hidden] { display: none !important; }
+.pen__vivo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pen__elegir-tit { margin: 0 0 10px; font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; font-size: 15px; text-transform: uppercase; color: var(--amarillo); }
+.pen__equipos { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }
+.pen__equipo {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; text-align: left;
+  border: 1px solid var(--borde); border-radius: var(--radio); background: var(--placa-oscura); box-shadow: var(--brillo);
+  color: var(--blanco); font: 600 13px/1.2 var(--f-texto); cursor: pointer;
+}
+.pen__equipo:hover, .pen__equipo:focus-visible { border-color: var(--amarillo); }
+.pen__escudo { width: 34px; height: 34px; flex-shrink: 0; object-fit: contain; }
+.pen__escudo--tela { border-radius: 4px 4px 50% 50%; border: 1.5px solid rgba(255,255,255,.75); box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.pen__escudo--grande { width: clamp(44px, 12cqw, 84px); height: clamp(44px, 12cqw, 84px); }
+
+.pen__cancha { container-type: inline-size; }
+.pen__cancha canvas { cursor: pointer; }
+.pen__tv {
+  position: absolute; top: 1.6%; left: 50%; transform: translateX(-50%); width: min(96%, 620px); pointer-events: none;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .5cqw 1.6cqw;
+  padding: .9cqw 1.6cqw 1.1cqw; border-radius: 1.4cqw; border: 1px solid rgba(255,255,255,.28);
+  background: linear-gradient(180deg, rgba(24,34,28,.94), rgba(10,16,13,.94)); box-shadow: 0 2px 8px rgba(0,0,0,.55);
+}
+.pen__tv-eq { display: flex; align-items: center; gap: 1.4cqw; min-width: 0; }
+.pen__tv-eq--der { justify-content: flex-end; }
+.pen__tv .pen__escudo { width: clamp(20px, 5.4cqw, 40px); height: clamp(20px, 5.4cqw, 40px); }
+.pen__tv-nombre {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff;
+  font-family: var(--f-display); font-variation-settings: "wdth" 115; font-stretch: 115%; font-weight: 800; font-size: clamp(10px, 2.9cqw, 20px); text-transform: uppercase;
+}
+.pen__tv-res { display: flex; align-items: center; gap: .8cqw; color: #fff; font-weight: 800; }
+.pen__tv-res b {
+  min-width: 1.5em; padding: 0 .25em; text-align: center; border-radius: .6cqw; background: #f4f4f4; color: #111;
+  font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-size: clamp(13px, 4cqw, 28px); line-height: 1.25;
+}
+.pen__tv-serie { display: flex; gap: .7cqw; }
+.pen__tv-serie--der { justify-content: flex-end; }
+.pen__tv-serie i { width: clamp(9px, 2.6cqw, 18px); height: clamp(7px, 1.9cqw, 13px); border-radius: 2px; background: #05080a; border: 1px solid rgba(255,255,255,.3); }
+.pen__tv-serie i.g { background: #36c24a; border-color: #8ff09a; }
+.pen__tv-serie i.e { background: #d8362b; border-color: #ff9a90; }
+.pen__tv-ms { text-align: center; color: var(--amarillo); font-weight: 800; font-size: clamp(7px, 1.7cqw, 11px); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.pen__msg { top: 46%; }
+.pen__capa { overflow-y: auto; gap: clamp(5px, 1.6cqw, 12px); padding: clamp(8px, 2.5cqw, 18px); z-index: 2; }
+.pen__capa-tit { font-size: clamp(14px, 4.2cqw, 26px); }
+.pen__capa-txt, .pen__capa-res { font-size: clamp(12px, 2.6cqw, 15px); }
+.pen__capa-ganador { line-height: 0; }
+.pen__capa-btns .btn-principal, .pen__capa-btns .btn-categoria { margin: 0; min-height: 40px; height: 40px; text-decoration: none; }
