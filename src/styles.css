@@ -260,8 +260,11 @@ a.tile:active { transform: translateY(0); }
 .juego-pag { display: flex; flex-direction: column; gap: 18px; max-width: 640px; }
 .volver { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 11px; letter-spacing: .04em; text-decoration: none; color: var(--blanco-2); }
 .volver:hover { color: var(--amarillo); }
-.juego-pag__cab { display: flex; flex-direction: column; gap: 10px; }
-.juego-pag__cab p { margin: 0; color: var(--blanco-2); font-size: 16px; }
+.juego-pag__cab { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.juego-pag__textos { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.juego-pag__textos .titulo-grande { margin: 0; }
+.juego-pag__cab .volver { flex-basis: 100%; }
+.juego-pag__cab p { margin: 0; color: var(--blanco-2); font-size: 15px; }
 .juego-pag__icono {
   width: 58px; height: 58px; border-radius: var(--radio); display: grid; place-items: center;
   background: var(--placa); border: 1px solid rgba(255,255,255,.22); box-shadow: var(--brillo), var(--sombra); color: var(--amarillo);
@@ -1352,8 +1355,8 @@ a.tile:active { transform: translateY(0); }
 .pen__capa-btns .btn-principal, .pen__capa-btns .btn-categoria { margin: 0; min-height: 40px; height: 40px; text-decoration: none; }
 
 /* ---------- Copa Argentina: pantallas, sorteo y cuadro ---------- */
-.copa { display: flex; flex-direction: column; gap: 12px; }
-.copa [hidden] { display: none !important; }
+.copa-juego { display: flex; flex-direction: column; gap: 12px; }
+.copa-juego [hidden] { display: none !important; }
 .copa__tit { margin: 0; font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; font-size: 16px; text-transform: uppercase; color: var(--amarillo); }
 .copa__txt { margin: 0; color: var(--blanco-2); font-size: 14px; }
 .copa__buscar { display: flex; flex-direction: column; gap: 4px; max-width: 360px; font-size: 12px; font-weight: 700; color: var(--blanco-2); text-transform: uppercase; letter-spacing: .04em; }
@@ -1469,3 +1472,90 @@ a.tile:active { transform: translateY(0); }
 .camino-simple__paso--hecho { border-color: var(--violeta-claro); }
 .camino-simple__paso--hecho span { color: var(--amarillo); }
 .serie .serie__rev { margin: 0; padding: 0 10px 8px; font-size: 11px; color: var(--blanco-2); line-height: 1.35; }
+
+
+/* =====================================================================
+   Penales Copa Argentina · layout de escritorio
+   Todo lo de este bloque aplica desde 900 px de ancho. El diseño de celular
+   queda como estaba y se trabaja aparte.
+   ===================================================================== */
+.cz-marco { display: flex; flex-direction: column; gap: 8px; }
+.cz-barra { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
+.cz-barra__detalle { flex: 1 1 280px; min-width: 0; margin: 0; font-size: 13px; color: var(--blanco-2); }
+.cz-barra__detalle strong { color: var(--blanco); }
+.cz-barra__detalle em { font-style: normal; color: var(--blanco-2); }
+.cz-barra__zoom { display: flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris-2); }
+.cz-barra__nivel { min-width: 52px; text-align: center; font: 700 12px var(--f-texto); color: var(--blanco-2); font-variant-numeric: tabular-nums; }
+.cz-btn { min-width: 38px; height: 36px; padding: 0 12px; border: 1px solid transparent; border-radius: 3px; background: var(--gris); color: var(--blanco); font: 700 12px var(--f-texto); letter-spacing: .03em; text-transform: uppercase; cursor: pointer; }
+.cz-btn:hover, .cz-btn:focus-visible { border-color: var(--violeta-claro); outline: none; }
+.cz-btn--yo { background: var(--amarillo); color: var(--negro); }
+.cz-btn--nueva { background: transparent; border-color: var(--borde); }
+.cz-btn.copa__peligro { height: auto; padding: 8px 12px; text-transform: none; border-color: #B8483A; background: rgba(142,47,37,.4); }
+.cz__visor--arrastre { cursor: grabbing; user-select: none; }
+.cz__visor--arrastre .cz { cursor: grabbing; }
+
+/* Panel horizontal del próximo partido */
+.copa-panel { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px 24px; padding: 12px 16px; border: 1px solid var(--borde); border-left: 4px solid var(--amarillo); border-radius: var(--radio); background: var(--placa-oscura); box-shadow: var(--brillo), var(--sombra); }
+.copa-panel--fin { grid-template-columns: auto minmax(0, 1fr) auto; border-left-color: var(--violeta-claro); }
+.copa-panel__ronda { display: flex; flex-direction: column; gap: 2px; padding-right: 20px; border-right: 1px solid var(--borde); }
+.copa-panel__ronda span { font: 700 11px var(--f-texto); letter-spacing: .06em; text-transform: uppercase; color: var(--blanco-2); }
+.copa-panel__ronda strong { font-family: var(--f-display); font-variation-settings: "wdth" 120; font-stretch: 120%; font-weight: 800; font-size: clamp(16px, 1.5vw, 22px); text-transform: uppercase; color: var(--amarillo); line-height: 1.1; }
+.copa-panel__ronda small { font-size: 12px; color: var(--blanco-2); }
+.copa-panel__cruce { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 2vw, 32px); min-width: 0; }
+.copa-panel__eq { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
+.copa-panel__eq--der { flex-direction: row-reverse; text-align: right; }
+.copa-panel__eq div { display: flex; flex-direction: column; min-width: 0; }
+.copa-panel__eq strong { font-family: var(--f-display); font-variation-settings: "wdth" 115; font-stretch: 115%; font-weight: 800; font-size: clamp(15px, 1.5vw, 22px); text-transform: uppercase; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copa-panel__eq small { font-size: 12px; color: var(--blanco-2); }
+.pen__escudo.copa-panel__escudo { width: clamp(40px, 3.4vw, 56px); height: clamp(40px, 3.4vw, 56px); flex-shrink: 0; }
+.copa-panel__vs { font-family: var(--f-display); font-weight: 800; font-size: 14px; color: var(--amarillo); }
+.copa-panel__btn { margin: 0; white-space: nowrap; }
+.copa-panel__txt { margin: 0; color: var(--blanco-2); font-size: 14px; }
+
+/* Cuadro a 100 %: textos y escudos legibles sin zoom del navegador */
+.cz { width: 214px; height: 60px; border-width: 1.5px; }
+.cz__eq { gap: 8px; padding: 0 9px; font-size: 14px; }
+.pen__escudo.cz__escudo { width: 20px; height: 20px; }
+.cz__goles { font-size: 14px; }
+.cz__goles small { font-size: 11.5px; }
+.cz__ronda { top: 12px; width: 214px; font-size: 13px; letter-spacing: .03em; }
+.cz__linea { stroke-width: 2; stroke: #55555c; }
+.cz__linea--yo { stroke-width: 3.5; }
+.cz--camino { border-color: var(--amarillo); }
+.cz--actual { box-shadow: 0 0 0 3px rgba(214,195,74,.55); }
+.cz__campeon { width: 214px; }
+.cz__campeon-tit { font-size: 13px; }
+.cz__campeon-eq { font-size: 15px; }
+
+@media (min-width: 900px) {
+  /* La página ocupa el 96 % del ancho, sin la columna central */
+  .vista:has(.juego-pag--penales) { max-width: none; width: 100%; padding: 12px 2vw 20px; }
+  .juego-pag--penales { max-width: none; gap: 12px; }
+  .juego-pag--penales .juego-pag__cab { flex-wrap: nowrap; gap: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--borde); }
+  .juego-pag--penales .juego-pag__cab .volver { flex-basis: auto; min-height: 40px; padding: 0 12px 0 8px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris-2); }
+  .juego-pag--penales .juego-pag__icono { width: 44px; height: 44px; flex-shrink: 0; }
+  .juego-pag--penales .juego-pag__icono svg { width: 26px; height: 26px; }
+  .juego-pag--penales .juego-pag__textos { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+  .juego-pag--penales .juego-pag__textos .titulo-grande { font-size: clamp(22px, 2vw, 30px); line-height: 1.1; }
+  .juego-pag--penales .copa-juego { gap: 10px; }
+
+  /* El cuadro toma la altura que queda en la ventana */
+  .juego-pag--penales .cz__visor { max-height: none; height: max(440px, calc(100vh - 342px)); cursor: grab; }
+
+  /* Elección de equipo y sorteo: a lo ancho */
+  .juego-pag--penales .pen__equipos { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .juego-pag--penales .copa__buscar { max-width: 420px; }
+  .juego-pag--penales .sorteo__bombo { max-width: 1200px; gap: 6px; }
+  .juego-pag--penales .sorteo__bombo .pen__escudo { width: 34px; height: 34px; }
+  .juego-pag--penales .sorteo__grilla { max-width: none; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+  .juego-pag--penales .sorteo__celda { height: 42px; }
+  .juego-pag--penales .sorteo__celda .pen__escudo { width: 28px; height: 28px; }
+
+  /* La tanda se ajusta al alto de la ventana para verse entera */
+  .juego-pag--penales #copa-tanda .pen { width: min(100%, calc((100vh - 250px) * 4 / 3)); margin: 0 auto; }
+  .juego-pag--penales .copa__final { padding: 32px 24px; }
+}
+
+/* Franja fija con los nombres de las rondas: acompaña el desplazamiento horizontal y queda arriba al bajar */
+.cz__titulos { position: sticky; top: 0; z-index: 3; height: 0; }
+.cz__titulos .cz__ronda { position: absolute; top: 0; padding: 7px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(180deg, var(--gris-2) 70%, rgba(26,26,28,0)); }

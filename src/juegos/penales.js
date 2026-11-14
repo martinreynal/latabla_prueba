@@ -21,7 +21,8 @@ export function montarPenales(raiz) {
   function pantalla(html) {
     limpiarPantalla();
     limpiarPantalla = () => {};
-    raiz.innerHTML = `<div class="copa">${html}</div>`;
+    raiz.innerHTML = `<div class="copa-juego">${html}</div>`;
+    raiz.dataset.pantalla = html.includes('cz-marco') ? 'cuadro' : html.includes('copa-tanda') ? 'tanda' : 'otra';
     return raiz.firstElementChild;
   }
   const guardar = () => guardarCopa(copa);
@@ -114,38 +115,49 @@ export function montarPenales(raiz) {
   function cuadro() {
     const yo = equipoCopa(copa.equipo);
     const enJuego = !!copa.partido;
-    let cab;
+    const catDe = (e) => CATEGORIAS.find((c) => c.clave === e.cat).nombre;
+    const lado = (e, der) => `
+      <div class="copa-panel__eq ${der ? 'copa-panel__eq--der' : ''}">
+        ${escudoHtml(e, 'copa-panel__escudo')}
+        <div><strong>${e.nombre}</strong><small>${catDe(e)}</small></div>
+      </div>`;
+    let panel;
     if (enJuego) {
       const rival = equipoCopa(rivalDe(partidoDe(copa, copa.equipo).m, copa.equipo));
-      cab = `
-        <div class="copa__proximo">
-          <p class="copa__etiqueta">${RONDAS[copa.ronda]} · Tu partido</p>
-          <p class="copa__cruce">${escudoHtml(yo)}<span>${yo.nombre}</span><em>vs</em><span>${rival.nombre}</span>${escudoHtml(rival)}</p>
-          <p class="copa__txt">${rival.nombre} juega en ${CATEGORIAS.find((c) => c.clave === rival.cat).nombre}.</p>
-          <button type="button" class="btn-principal" id="copa-jugar">Jugar mi partido</button>
-        </div>`;
+      panel = `
+        <section class="copa-panel" aria-label="Tu próximo partido">
+          <div class="copa-panel__ronda"><span>Tu partido</span><strong>${RONDAS[copa.ronda]}</strong><small>Ronda ${copa.ronda + 1} de ${RONDAS.length}</small></div>
+          <div class="copa-panel__cruce">${lado(yo, false)}<span class="copa-panel__vs">VS</span>${lado(rival, true)}</div>
+          <button type="button" class="btn-principal copa-panel__btn" id="copa-jugar">Jugar mi partido</button>
+        </section>`;
     } else if (copa.estado === 'campeon') {
-      cab = `<div class="copa__proximo"><p class="copa__etiqueta">Copa terminada</p><p class="copa__cruce">${escudoHtml(yo)}<span>${yo.nombre}, campeón de la Copa Argentina 2026</span></p></div>`;
+      panel = `<section class="copa-panel copa-panel--fin"><div class="copa-panel__ronda"><span>Copa terminada</span><strong>Campeón</strong></div><div class="copa-panel__cruce">${lado(yo, false)}</div><p class="copa-panel__txt">${yo.nombre}, campeón de la Copa Argentina 2026.</p></section>`;
     } else {
       const m = partidoDe(copa, copa.equipo, copa.eliminadoEn).m;
-      cab = `<div class="copa__proximo"><p class="copa__etiqueta">Copa terminada</p><p class="copa__cruce">${escudoHtml(yo)}<span>${yo.nombre} quedó eliminado en ${RONDAS[copa.eliminadoEn].toLowerCase()} contra ${equipoCopa(rivalDe(m, copa.equipo)).nombre}</span></p></div>`;
+      const rival = equipoCopa(rivalDe(m, copa.equipo));
+      panel = `<section class="copa-panel copa-panel--fin"><div class="copa-panel__ronda"><span>Copa terminada</span><strong>Eliminado</strong><small>${RONDAS[copa.eliminadoEn]}</small></div><div class="copa-panel__cruce">${lado(yo, false)}<span class="copa-panel__vs">VS</span>${lado(rival, true)}</div><p class="copa-panel__txt">${rival.nombre} te ganó en los penales.</p></section>`;
     }
     const el = pantalla(`
-      ${cab}
-      <div class="copa__barra">
-        <h2 class="copa__tit">Cuadro</h2>
-        <div class="copa__zoom">
-          <button type="button" class="btn-categoria" id="cz-menos" aria-label="Alejar">−</button>
-          <button type="button" class="btn-categoria" id="cz-mas" aria-label="Acercar">+</button>
-          <button type="button" class="btn-categoria" id="cz-centrar">Mi partido</button>
+      ${panel}
+      <section class="cz-marco" aria-label="Cuadro de la Copa Argentina">
+        <div class="cz-barra">
+          <h2 class="copa__tit">Cuadro</h2>
+          <p class="cz-barra__detalle" id="cz-detalle" role="status">Tocá un cruce para ver el detalle · arrastrá para moverte · Ctrl + rueda para hacer zoom. El camino de ${yo.corto} va en amarillo.</p>
+          <div class="cz-barra__zoom" role="group" aria-label="Zoom del cuadro">
+            <button type="button" class="cz-btn" id="cz-menos" aria-label="Alejar">−</button>
+            <span class="cz-barra__nivel" id="cz-nivel">100 %</span>
+            <button type="button" class="cz-btn" id="cz-mas" aria-label="Acercar">+</button>
+            <button type="button" class="cz-btn" id="cz-todo">Ver todo</button>
+            <button type="button" class="cz-btn cz-btn--yo" id="cz-centrar">Mi partido</button>
+          </div>
+          <button type="button" class="cz-btn cz-btn--nueva" id="copa-nueva">Nueva copa</button>
         </div>
-      </div>
-      <div class="cz__visor" id="cz-visor" tabindex="0" aria-label="Cuadro de la Copa Argentina. Se desplaza en las dos direcciones."><div class="cz__lienzo">${htmlCuadro(copa)}</div></div>
-      <p class="copa__detalle" id="cz-detalle" role="status">Tocá un cruce para ver el detalle. El camino de ${yo.corto} está marcado en amarillo.</p>
-      <div class="copa__pie"><button type="button" class="btn-categoria" id="copa-nueva">Nueva copa</button></div>`);
-    const c = activarCuadro(el.querySelector('#cz-visor'), copa, (html) => { el.querySelector('#cz-detalle').innerHTML = html; });
+        <div class="cz__visor" id="cz-visor" tabindex="0" aria-label="Cuadro de la Copa Argentina. Se desplaza en las dos direcciones."><div class="cz__lienzo">${htmlCuadro(copa)}</div></div>
+      </section>`);
+    const c = activarCuadro(el.querySelector('#cz-visor'), copa, (html) => { el.querySelector('#cz-detalle').innerHTML = html; }, (z) => { el.querySelector('#cz-nivel').textContent = `${Math.round(z * 100)} %`; });
     el.querySelector('#cz-mas').addEventListener('click', c.mas);
     el.querySelector('#cz-menos').addEventListener('click', c.menos);
+    el.querySelector('#cz-todo').addEventListener('click', c.todo);
     el.querySelector('#cz-centrar').addEventListener('click', c.centrar);
     el.querySelector('#copa-jugar')?.addEventListener('click', partido);
     // "Nueva copa" pide confirmación en el mismo botón si hay una copa en curso.
