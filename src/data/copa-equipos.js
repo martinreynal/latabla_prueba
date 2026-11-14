@@ -76,7 +76,7 @@ const PRIMERA_C = [
   ['copa-claypole', 'Claypole', 'Claypole', B, N, 'rayas', N, N],
   ['espn-18662', 'Deportivo Camioneros', 'Camioneros', '#146414', B, 'liso', '#146414', '#146414'],
   ['espn-10105', 'Ituzaingó', 'Ituzaingó', '#148c3c', B, 'liso', B, '#148c3c'],
-  ['copa-sportivo-barracas', 'Sportivo Barracas', 'Sp. Barracas', '#6cb4e4', R, 'liso', B, '#6cb4e4'],
+  ['copa-sportivo-barracas', 'Sportivo Barracas', 'Sp. Barracas', '#1b2f8a', B, 'rayas', '#1b2f8a', '#1b2f8a'],
 ];
 
 export const CATEGORIAS = [
