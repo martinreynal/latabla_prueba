@@ -96,6 +96,35 @@ for (const [id, nombre, terminos] of [['copa-claypole', 'Claypole', ['Claypole',
   catch (err) { log.push(`FALLA ${id} ${nombre}: ${err.message}`); }
 }
 
+// ---------- Primera C 2026 ----------
+// Solo se acepta un resultado de TheSportsDB cuya liga sea del ascenso metropolitano,
+// para no confundir clubes homónimos del interior (Mercedes, Luján, Estrella del Sur…).
+const slugC = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const PRIMERA_C = [
+  ['Berazategui', ['Berazategui', 'Asociacion Deportiva Berazategui']], ['Sacachispas', ['Sacachispas']], ['Estrella del Sur', ['Estrella del Sur']],
+  ['Centro Español', ['Centro Espanol', 'Centro Español']], ['Mercedes', ['Club Mercedes', 'Mercedes']], ['Victoriano Arenas', ['Victoriano Arenas']],
+  ['CA Lugano', ['Lugano', 'Club Atletico Lugano']], ['Juventud Unida (San Miguel)', ['Juventud Unida', 'Juventud Unida San Miguel']], ['Puerto Nuevo', ['Puerto Nuevo']],
+  ['Cambaceres', ['Cambaceres', 'Defensores de Cambaceres']], ['JJ Urquiza', ['J.J. Urquiza', 'Justo Jose de Urquiza', 'JJ Urquiza']], ['Paraguayo', ['Deportivo Paraguayo', 'Paraguayo']],
+  ['Leandro N. Alem', ['Leandro N. Alem', 'Leandro Alem']], ['Argentino de Rosario', ['Argentino de Rosario']], ['Luján', ['Club Lujan', 'Lujan']],
+  ['Cañuelas', ['Canuelas', 'Cañuelas']], ['Deportivo Español', ['Deportivo Espanol', 'Deportivo Español']], ['Leones de Rosario', ['Leones de Rosario', 'Leones FC']],
+  ['Central Córdoba (Rosario)', ['Central Cordoba Rosario', 'Central Córdoba de Rosario']], ['General Lamadrid', ['General Lamadrid']], ['El Porvenir', ['El Porvenir']],
+  ['Central Ballester', ['Central Ballester']], ['Atlas', ['Atlas', 'Club Atletico Atlas']], ['Yupanqui', ['Yupanqui']], ['Fénix', ['Fenix', 'Club Atletico Fenix']], ['Muñiz', ['Muniz', 'Muñiz']],
+];
+for (const [nombre, terminos] of PRIMERA_C) {
+  const id = `c-${slugC(nombre)}`;
+  if (manifiesto[id]) continue;
+  let elegido = null;
+  for (const t of terminos) {
+    const lista = await buscar(t);
+    await esperar(4000);
+    elegido = lista.find((x) => /Primera (B|C|D)|Metropolitan/i.test(x.strLeague ?? '')) ?? null;
+    if (elegido) break;
+  }
+  if (!elegido) { log.push(`FALTA ${id} ${nombre}`); continue; }
+  try { await guardar(id, elegido.strBadge); log.push(`ok   ${id} ${nombre} ← ${elegido.strTeam} (${elegido.strLeague})`); }
+  catch (err) { log.push(`FALLA ${id} ${nombre}: ${err.message}`); }
+}
+
 const ordenado = Object.fromEntries(Object.entries(manifiesto).sort(([a], [b]) => a.localeCompare(b)));
 await fs.writeFile(MANIFIESTO, `${JSON.stringify(ordenado, null, 2)}\n`);
 await fs.writeFile(`${DIR}/informe.txt`, `${log.join('\n')}\n`);
