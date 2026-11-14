@@ -1,5 +1,6 @@
-import { tablaZona as tablaCargada } from '../lib/resultados.js';
-import { PRIMERA_C as PC, REGIONAL } from '../data/abajo-ejemplo.js';
+import { REGIONES, REGIONAL_ACTUALIZADO } from '../data/regional-real.js';
+import { PRIMERAC, PRIMERAC_ACTUALIZADO, FINAL_C, REDUCIDO_C } from '../data/primerac-real.js';
+import { escudoMini } from '../lib/escudos.js';
 import { ordenar } from '../lib/reglas-federal.js';
 import { tabla, leyenda, pestanas, selectorTorneo, cabecera, cruceHtml } from '../components/tablas.js';
 import { abrirMenu } from '../components/menu.js';
@@ -10,29 +11,40 @@ let torneo = 'primerac';
 let vistaC = 'posiciones';
 let region = 0;
 
-/* ---------- Primera C ---------- */
+/* ---------- Primera C (datos reales, cargados a mano) ---------- */
 const sitC = (pos, total) => (pos === 1 ? 'ascenso' : pos <= 7 ? 'reducido' : pos === total ? 'descenso' : 'neutro');
+const eqLink = (e) => (e ? `${escudoMini(e.id)}<a href="/equipo/${e.id}" data-link class="eq-link">${e.nombre}</a>` : 'A confirmar');
 
-function hoyPrimeraC(A, B) {
-  const red = [...A.slice(1, 7).map((e, i) => ({ ...e, etiqueta: `${i + 2}.º A` })), ...B.slice(1, 7).map((e, i) => ({ ...e, etiqueta: `${i + 2}.º B` }))];
+function serieC(s, i) {
+  const pend = !s.pasa;
+  const lado = (e, g) => `<div class="serie__eq serie__eq--libre ${s.pasa && e && s.pasa.id === e.id ? 'serie__eq--gana' : ''}"><span class="cruce__nombre">${eqLink(e)}</span>${g != null ? `<span class="cruce__pts">${g}</span>` : ''}</div>`;
+  const pie = s.pasa ? `Global <strong>${s.g1}–${s.g2}</strong> · pasa ${s.pasa.nombre}${s.g1 === s.g2 ? ' tras igualar la serie' : ''}`
+    : s.g1 != null ? `En juego · global <strong>${s.g1}–${s.g2}</strong>` : 'Por jugar';
+  return `<div class="serie ${pend ? 'serie--pend' : ''}"><span class="serie__n">Serie ${i + 1}</span>${lado(s.a, s.g1)}${lado(s.b, s.g2)}<p class="serie__global">${pie}</p></div>`;
+}
+
+function reducidoC() {
+  const F = FINAL_C;
+  const perdedor = F.ganador.id === F.a.id ? F.b : F.a;
   return `
   <section class="hoy">
-    <div class="hoy__cab"><h2 class="hoy__titulo">Así se jugaría hoy</h2><span class="provisorio">Provisorio</span></div>
+    <div class="hoy__cab"><h2 class="hoy__titulo">Final por el 1.er ascenso</h2></div>
     <div class="final-asc">
-      <p class="final-asc__etiqueta">Final por el 1.er ascenso <span>Ida y vuelta · el ganador es campeón y sube a la Primera B</span></p>
       <div class="final-asc__marcador">
-        <div class="final-asc__eq"><span class="final-asc__pos">1.º A</span><span class="final-asc__nombre">${A[0].nombre}</span><span class="final-asc__pts">${A[0].pts} pts</span></div>
+        <div class="final-asc__eq"><span class="final-asc__pos">1.º A</span><span class="final-asc__nombre">${F.a.nombre}</span></div>
         <span class="final-asc__vs">VS</span>
-        <div class="final-asc__eq final-asc__eq--der"><span class="final-asc__pos">1.º B</span><span class="final-asc__nombre">${B[0].nombre}</span><span class="final-asc__pts">${B[0].pts} pts</span></div>
+        <div class="final-asc__eq final-asc__eq--der"><span class="final-asc__pos">1.º B</span><span class="final-asc__nombre">${F.b.nombre}</span></div>
       </div>
-      <p class="final-asc__pie">El perdedor de la final entra directo a las semifinales del Reducido.</p>
+      <div class="asc-chip">${icon('flame', 14)}${F.ganador.nombre} campeón · asciende a la Primera B</div>
+      <p class="final-asc__pie">${perdedor.nombre} perdió la final y entró directo a las semifinales del Reducido.</p>
     </div>
-    <div class="reducido">
-      <h3 class="llave__titulo">Reducido por el 2.º ascenso · clasificados hoy</h3>
-      <p class="hoy__nota">Del 2.º al 7.º de cada zona, doce equipos, más el perdedor de la final en semifinales.</p>
-      <ul class="chips-eq">${red.map((e) => `<li><span class="cruce__pos">${e.etiqueta}</span>${e.nombre}</li>`).join('')}</ul>
-    </div>
-  </section>`;
+  </section>
+  ${REDUCIDO_C.map((r) => `
+  <section class="hoy">
+    <div class="hoy__cab"><h2 class="hoy__titulo">Reducido · ${r.ronda}</h2>${r.series.every((x) => x.pasa) ? '' : `<span class="provisorio">${r.series.every((x) => x.g1 == null) ? 'Por jugar' : 'En juego'}</span>`}</div>
+    <div class="reducido__grilla">${r.series.map(serieC).join('')}</div>
+  </section>`).join('')}
+  <p class="aviso aviso--chico">El ganador del Reducido es el 2.º ascenso a la Primera B. En las series que terminaron igualadas, la captura indica quién pasó pero no cómo (penales o ventaja deportiva).</p>`;
 }
 
 function desafiliacion(A, B) {
@@ -40,7 +52,7 @@ function desafiliacion(A, B) {
   const ub = { ...B[B.length - 1], etiqueta: `${B.length}.º B` };
   return `
   <section class="hoy hoy--rojo">
-    <div class="hoy__cab"><h2 class="hoy__titulo">Partido por la desafiliación</h2><span class="provisorio">Provisorio</span></div>
+    <div class="hoy__cab"><h2 class="hoy__titulo">Partido por la desafiliación</h2><span class="provisorio">Resultado a confirmar</span></div>
     <p class="hoy__nota">Se enfrentan los últimos de cada zona.</p>
     <div class="reducido__grilla reducido__grilla--1">${cruceHtml('VS', ua, ub, false)}</div>
     <div class="desafil">
@@ -51,42 +63,49 @@ function desafiliacion(A, B) {
 }
 
 function vistaPrimeraC() {
-  const cA = tablaCargada('primerac', 'A', PC.A), cB = tablaCargada('primerac', 'B', PC.B);
-  const A = ordenar(cA.filas), B = ordenar(cB.filas);
+  const A = PRIMERAC.A, B = PRIMERAC.B;
   const sit = (pos) => sitC(pos, 14);
   const ley = leyenda([['ascenso', '1.º · Final por el ascenso'], ['reducido', '2.º a 7.º · Reducido'], ['descenso', 'Último · partido por la desafiliación'], ['neutro', 'Sin definición']]);
+  const tit = (z) => `${z} <span class="fuente fuente--real">Final · al ${PRIMERAC_ACTUALIZADO}</span>`;
   let cuerpo;
-  if (vistaC === 'ascenso') cuerpo = `${hoyPrimeraC(A, B)}<div class="dos-tablas dos-tablas--margen">${tabla('Zona A · 1.º a 7.º', A, sit, { hasta: 7, cortes: [1] })}${tabla('Zona B · 1.º a 7.º', B, sit, { hasta: 7, cortes: [1] })}</div>`;
+  if (vistaC === 'ascenso') cuerpo = reducidoC();
   else if (vistaC === 'desafiliacion') cuerpo = `${desafiliacion(A, B)}<div class="dos-tablas dos-tablas--margen">${tabla('Zona A · 10.º a 14.º', A, sit, { desde: 10, cortes: [13] })}${tabla('Zona B · 10.º a 14.º', B, sit, { desde: 10, cortes: [13] })}</div>`;
-  else cuerpo = `<div class="dos-tablas">${tabla(`Zona A ${cA.etiqueta}`, A, sit, { cortes: [1, 7, 13] })}${tabla(`Zona B ${cB.etiqueta}`, B, sit, { cortes: [1, 7, 13] })}</div>${hoyPrimeraC(A, B)}`;
+  else cuerpo = `${ley}<div class="dos-tablas">${tabla(tit('Zona A'), A, sit, { cortes: [1, 7, 13] })}${tabla(tit('Zona B'), B, sit, { cortes: [1, 7, 13] })}</div>`;
   return `
-    <p class="formato-resumen"><strong>Dos zonas de 14.</strong> Todos contra todos a dos ruedas, más tres cruces interzonales por rueda. Dos ascensos a la Primera B y un partido por la desafiliación.</p>
-    ${pestanas([['posiciones', 'Posiciones'], ['ascenso', 'Ascenso / Reducido'], ['desafiliacion', 'Desafiliación']], vistaC, 'data-vc')}
-    ${ley}${cuerpo}`;
+    <p class="formato-resumen"><strong>Dos zonas de 14.</strong> Todos contra todos a dos ruedas, más cruces interzonales. Dos ascensos a la Primera B y un partido por la desafiliación.</p>
+    <p class="fase-actual">Fase regular: <strong>terminada</strong> · Reducido: <strong>cuartos de final</strong></p>
+    ${pestanas([['posiciones', 'Posiciones'], ['ascenso', 'Final y Reducido'], ['desafiliacion', 'Desafiliación']], vistaC, 'data-vc')}
+    ${cuerpo}`;
 }
 
-/* ---------- Regional Amateur ---------- */
+/* ---------- Regional Amateur (primera ronda real, transcripta) ---------- */
 function vistaRegional() {
-  const reg = REGIONAL.regiones[region];
+  const reg = REGIONES[region];
+  const sit = (pos, e) => (e.pasa === 'tercera' ? 'ascenso' : e.pasa === 'segunda' ? 'reducido' : 'neutro');
+  const ley = [];
+  if (reg.tercera) ley.push(['ascenso', `Directo a la tercera ronda (${reg.tercera})`]);
+  if (reg.segunda) ley.push(['reducido', `A la segunda ronda (${reg.segunda})`]);
+  ley.push(['neutro', 'Eliminado']);
   return `
-    <p class="formato-resumen"><strong>El torneo más grande del país.</strong> Organizado por el Consejo Federal para clubes que llegan desde las ligas regionales. Empezó el 30 de agosto y su etapa final está prevista para el 20 de diciembre. Da cuatro ascensos al Federal A 2027.</p>
+    <p class="formato-resumen"><strong>El torneo más grande del país.</strong> Organizado por el Consejo Federal para clubes que llegan desde las ligas del interior, dividido en ocho regiones. Da ascensos al Federal A 2027.</p>
     <div class="camino-simple" aria-label="Cómo se juega">
-      <div class="camino-simple__paso"><strong>Zonas regionales</strong><span>Grupos chicos por cercanía</span></div>
+      <div class="camino-simple__paso camino-simple__paso--hecho"><strong>Primera ronda</strong><span>Zonas por región · terminada</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
-      <div class="camino-simple__paso"><strong>Eliminatorias</strong><span>Mano a mano, ida y vuelta</span></div>
+      <div class="camino-simple__paso"><strong>Rondas eliminatorias</strong><span>Mano a mano, ida y vuelta</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
-      <div class="camino-simple__paso"><strong>Etapa final</strong><span>8 equipos</span></div>
+      <div class="camino-simple__paso"><strong>Final de cada región</strong><span>Etapa final nacional</span></div>
       <span class="camino-simple__fl">${icon('chevron', 16)}</span>
-      <div class="camino-simple__paso camino-simple__paso--oro"><strong>4 ascensos</strong><span>al Federal A 2027</span></div>
+      <div class="camino-simple__paso camino-simple__paso--oro"><strong>Ascensos</strong><span>al Federal A 2027</span></div>
     </div>
-    <div class="anios" role="tablist" aria-label="Región">
-      ${REGIONAL.regiones.map((r, i) => `<button type="button" role="tab" class="anio ${i === region ? 'activa' : ''}" aria-selected="${i === region}" data-region="${i}">${r.nombre}</button>`).join('')}
+    <div class="anios anios--regiones" role="tablist" aria-label="Región">
+      ${REGIONES.map((r, i) => `<button type="button" role="tab" class="anio ${i === region ? 'activa' : ''}" aria-selected="${i === region}" data-region="${i}">${r.nombre}</button>`).join('')}
     </div>
-    ${leyenda([['reducido', 'Pasa a la ronda eliminatoria'], ['neutro', 'Eliminado']])}
+    <p class="fase-actual">Región ${reg.nombre}: <strong>${reg.zonas.length} zonas</strong> · ${reg.zonas.reduce((n, z) => n + z.tabla.length, 0)} equipos · tablas finales de la primera ronda</p>
+    ${leyenda(ley)}
     <div class="cuatro-tablas cuatro-tablas--3">
-      ${reg.zonas.map((z) => tabla(`${reg.nombre} · ${z.nombre}`, ordenar(z.tabla), (pos) => (pos <= 2 ? 'reducido' : 'neutro'), { cortes: [2], compacta: true })).join('')}
+      ${reg.zonas.map((z) => tabla(z.nombre, z.tabla, sit, { compacta: true, extra: [{ th: 'DG', td: (e) => (e.dg > 0 ? `+${e.dg}` : e.dg), opc: true }] })).join('')}
     </div>
-    <p class="aviso aviso--chico">La cantidad de zonas y de clasificados por zona cambia según la región. En esta vista, pasan los dos primeros de cada zona.</p>`;
+    <p class="aviso aviso--chico">Datos de la primera ronda transcriptos de las tablas que publica Ascenso del Interior, al ${REGIONAL_ACTUALIZADO}. En algunas regiones también clasificaron los mejores segundos o terceros. Las rondas eliminatorias todavía no están cargadas.</p>`;
 }
 
 export function cuarta(sub) {
@@ -96,7 +115,7 @@ export function cuarta(sub) {
     titulo: 'Cuarta División · Latabla',
     html: `
     <section class="tabla-pag tabla-pag--tercera">
-      ${cabecera('Cuarta División', 'Temporada 2026 · Primera C para los clubes afiliados a AFA, Torneo Regional Federal Amateur para el interior', icon('menu', 18))}
+      ${cabecera('Cuarta División', 'Temporada 2026 · Primera C para los clubes afiliados a AFA, Torneo Regional Federal Amateur para el interior', icon('menu', 18), `Datos reales · cargados al ${PRIMERAC_ACTUALIZADO}`)}
       <div id="torneo-sel"></div>
       <div id="tercera-contenido"></div>
     </section>`,

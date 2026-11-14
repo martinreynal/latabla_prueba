@@ -1,8 +1,0 @@
-https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-/js/jquery.lightbox-0.5.js
-/js/divs2.js
-//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js
-http://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-4fd120f551121a05
-//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js
-//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js
-//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js

@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-Date: Sat, 14 Nov 2026 16:47:34 GMT
-Server: Apache
-X-Powered-By: PHP/8.2.35
-Vary: Accept-Encoding
-Transfer-Encoding: chunked
-Content-Type: text/html; charset=UTF-8
-

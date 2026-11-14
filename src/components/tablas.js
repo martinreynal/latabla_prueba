@@ -42,10 +42,10 @@ export function selectorTorneo(opciones, activo) {
     `<button type="button" role="tab" class="${v === activo ? 'activo' : ''}" aria-selected="${v === activo}" data-torneo="${v}"><strong>${t}</strong><small>${s}</small></button>`).join('')}</div>`;
 }
 
-export function cabecera(titulo, sub, icono) {
+export function cabecera(titulo, sub, icono, estado = null) {
   return `
   <div class="tabla-pag__cab">
-    <p class="estado-datos"><span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo</p>
+    <p class="estado-datos" id="tercera-estado">${estado ? `<span class="punto-vivo"></span>${estado}` : '<span class="punto-vivo punto-vivo--apagado"></span>Datos de ejemplo'}</p>
     <h1 class="titulo-grande">${titulo}</h1>
     <p class="tabla-pag__torneo">${sub}</p>
     <button type="button" class="btn-categoria" id="btn-categoria">${icono}Cambiar categoría</button>

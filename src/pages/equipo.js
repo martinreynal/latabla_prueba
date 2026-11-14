@@ -4,25 +4,29 @@ import { icon } from '../lib/icons.js';
 import { equipoVivo, haceCuanto } from '../lib/vivo.js';
 import { ANUAL_REAL, PRIMERA_REAL } from '../data/primera-real.js';
 import { REGULAR, FEDERAL_ACTUALIZADO } from '../data/federal-real.js';
+import { PRIMERAC, PRIMERAC_ACTUALIZADO } from '../data/primerac-real.js';
+import { REGIONES, REGIONAL_ACTUALIZADO } from '../data/regional-real.js';
 
 const TORNEO_VIVO = {
   primera: { cat: 'Primera División', nombre: 'Liga Profesional · Clausura 2026', ruta: '/tablas/primera' },
   nacional: { cat: 'Segunda División', nombre: 'Primera Nacional 2026', ruta: '/tablas/segunda' },
   bmetro: { cat: 'Tercera División', nombre: 'Primera B 2026', ruta: '/tablas/tercera/primera-b' },
   federal: { cat: 'Tercera División', nombre: 'Federal A 2026 · Primera Fase', ruta: '/tablas/tercera/federal-a' },
+  primerac: { cat: 'Cuarta División', nombre: 'Primera C 2026', ruta: '/tablas/cuarta/primera-c' },
+  regional: { cat: 'Cuarta División', nombre: 'Regional Amateur 2026 · Primera ronda', ruta: '/tablas/cuarta/regional-amateur' },
 };
 
 function perfilReal(v) {
   const t = TORNEO_VIVO[v.torneo];
   const f = v.fila;
-  const zona = v.zona === 'U' ? 'Tabla general' : v.zona === 'anual' ? 'Tabla anual' : `Zona ${v.zona}`;
+  const zona = v.zona === 'U' ? 'Tabla general' : v.zona === 'anual' ? 'Tabla anual' : v.zona.length > 2 ? v.zona : `Zona ${v.zona}`;
   const dato = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
   return {
     titulo: `${f.nombre} · Latabla`,
     html: `
     <section class="perfil">
       <a href="${t.ruta}" data-link class="volver">${icon('back', 18)}Volver a la tabla</a>
-      <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : v.torneo === 'federal' ? `Datos reales · cargados al ${FEDERAL_ACTUALIZADO}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
+      <p class="estado-datos"><span class="punto-vivo"></span>${v.actualizado ? `En vivo · ESPN · ${haceCuanto(v.actualizado)}` : v.torneo === 'federal' ? `Datos reales · cargados al ${FEDERAL_ACTUALIZADO}` : v.torneo === 'primerac' ? `Datos reales · cargados al ${PRIMERAC_ACTUALIZADO}` : v.torneo === 'regional' ? `Datos reales · cargados al ${REGIONAL_ACTUALIZADO}` : `Tabla anual al ${PRIMERA_REAL.actualizado}`}</p>
       <header class="perfil__cab">
         ${urlEscudo(f.id) ? `<div class="perfil__escudo perfil__escudo--img"><img src="${urlEscudo(f.id)}" alt="Escudo de ${f.nombre}" width="96" height="96"></div>` : `<div class="perfil__escudo" style="--c1:#6E5F8B;--c2:#463C5C" role="img" aria-label="Escudo pendiente de carga"><span>${iniciales(f.nombre)}</span></div>`}
         <div class="perfil__id">
@@ -43,6 +47,19 @@ function perfilReal(v) {
 const iniciales = (n) => n.replace(/^(Equipo|Club) /, '').split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase();
 
 export function equipo(id) {
+  if (id.startsWith('c-') || id === 'copa-claypole' || id === 'copa-sportivo-barracas') {
+    for (const [zona, t] of Object.entries(PRIMERAC)) {
+      const i = t.findIndex((e) => e.id === id);
+      if (i >= 0) return perfilReal({ torneo: 'primerac', zona, fila: t[i], pos: i + 1, total: t.length, actualizado: null });
+    }
+  }
+  if (id.startsWith('reg-')) {
+    for (const r of REGIONES) for (const z of r.zonas) {
+      const i = z.tabla.findIndex((e) => e.id === id);
+      if (i >= 0) return perfilReal({ torneo: 'regional', zona: `${r.nombre} · ${z.nombre}`, fila: z.tabla[i], pos: i + 1, total: z.tabla.length, actualizado: null });
+    }
+    return null;
+  }
   if (id.startsWith('fed-')) {
     for (const [zona, t] of Object.entries(REGULAR)) {
       const i = t.findIndex((e) => e.id === id);

@@ -1481,3 +1481,5 @@ a.tile:active { transform: translateY(0); }
   .pen__tv { position: static; order: -1; transform: none; width: 100%; border: 0; border-radius: 0; padding: 6px 10px 7px; row-gap: 2px; }
 }
 .pen__msg { font-size: clamp(14px, 5.2cqw, 34px); white-space: normal; text-align: center; width: max-content; max-width: 92%; line-height: 1.1; }
+.camino-simple__paso--hecho { border-color: var(--violeta-claro); }
+.camino-simple__paso--hecho span { color: var(--amarillo); }
