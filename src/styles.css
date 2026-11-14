@@ -1559,3 +1559,58 @@ a.tile:active { transform: translateY(0); }
 /* Franja fija con los nombres de las rondas: acompaña el desplazamiento horizontal y queda arriba al bajar */
 .cz__titulos { position: sticky; top: 0; z-index: 3; height: 0; }
 .cz__titulos .cz__ronda { position: absolute; top: 0; padding: 7px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(180deg, var(--gris-2) 70%, rgba(26,26,28,0)); }
+
+/* ===== Copas CONMEBOL ===== */
+.cm-arg { display: inline-block; margin-left: 6px; padding: 1px 4px; border-radius: 2px; background: #75AADB; color: #0d1b2a; font: 800 9.5px var(--f-texto); letter-spacing: .04em; text-decoration: none; vertical-align: 2px; }
+.serie--arg { border-color: rgba(117,170,219,.6); }
+.cm-final .final-asc__pie { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cm-dos { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cm-tabla td { padding: 9px 10px; font-size: 13.5px; }
+.cm-tabla td.num--sec { color: var(--blanco-2); }
+.cm-nivel--final td:first-child { color: var(--amarillo); font-weight: 800; }
+.cm-nivel--final td:last-child { color: var(--amarillo); font-weight: 700; }
+.cm-campeones { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris-2); }
+.cm-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.cm-lista li { display: grid; grid-template-columns: 48px 1fr; gap: 8px; padding: 6px 8px; background: var(--gris); border-radius: 2px; font-size: 14px; }
+.cm-lista li > span:first-child { font-family: var(--f-display); font-weight: 800; color: var(--blanco-2); }
+.cm-pie { max-width: 460px; }
+.provisorio--ok { border-style: solid; }
+@media (max-width: 760px) { .cm-dos { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Selección Argentina ===== */
+.sel { display: flex; flex-direction: column; gap: 16px; }
+.sel__datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.sel__dato { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--borde); border-top: 3px solid #75AADB; border-radius: var(--radio); background: var(--placa-oscura); box-shadow: var(--brillo); }
+.sel__dato span { font: 700 11px var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--blanco-2); }
+.sel__dato strong { font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; font-size: clamp(20px, 2.4vw, 30px); color: var(--amarillo); text-transform: uppercase; line-height: 1.1; }
+.sel__dato small { font-size: 12.5px; color: var(--blanco-2); }
+.sel__vs { margin: 0 14px; font-family: var(--f-display); font-variation-settings: "wdth" 120; font-stretch: 120%; font-weight: 800; font-size: clamp(18px, 2.2vw, 28px); text-transform: uppercase; }
+.sel__vs em { font-style: normal; color: var(--amarillo); font-size: .7em; margin: 0 6px; }
+.sel__proximo .hoy__nota { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sel__dos { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.sel__partidos { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.sel__partido { display: grid; grid-template-columns: 92px 1fr; gap: 2px 10px; padding: 8px 10px; border-left: 3px solid var(--gris-3); background: var(--gris); border-radius: 2px; }
+.sel__partido--g { border-left-color: #36c24a; }
+.sel__partido--p { border-left-color: #d8362b; }
+.sel__partido--e { border-left-color: var(--violeta-claro); }
+.sel__fecha { grid-row: span 2; font: 700 12px var(--f-texto); color: var(--blanco-2); align-self: center; }
+.sel__rival { font-weight: 700; font-size: 15px; }
+.sel__rival b { margin: 0 6px; font-family: var(--f-display); color: var(--amarillo); }
+.sel__comp { font-size: 12.5px; color: var(--blanco-2); }
+.sel__texto { margin: 0; padding: 10px 12px 0; color: var(--blanco-2); font-size: 14px; }
+.sel__camino { list-style: none; margin: 0; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.sel__camino li { display: grid; grid-template-columns: 90px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; background: var(--gris); border-left: 3px solid var(--gris-3); border-radius: 2px; font-size: 14px; }
+.sel__camino li span { font: 700 11.5px var(--f-texto); text-transform: uppercase; color: var(--blanco-2); }
+.sel__camino li b { font-family: var(--f-display); color: var(--amarillo); }
+.sel__palmares { list-style: none; margin: 0; padding: 12px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.sel__palmares li { display: flex; flex-direction: column; gap: 2px; padding: 10px; background: var(--gris); border-radius: 2px; }
+.sel__palmares strong { font-family: var(--f-display); font-weight: 800; font-size: 28px; color: var(--amarillo); line-height: 1; }
+.sel__palmares span { font-weight: 700; }
+.sel__palmares small { font-size: 12px; color: var(--blanco-2); }
+@media (max-width: 760px) {
+  .sel__datos, .sel__palmares { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sel__dos { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 900px) {
+  .vista:has(.tabla-pag--conmebol), .vista:has(.sel) { max-width: 1400px; }
+}

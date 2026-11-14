@@ -7,6 +7,7 @@ export const ESTRUCTURA = [
   { slug: 'quinta', nombre: 'Quinta División', subs: [['promocional-amateur', 'Torneo Promocional Amateur'], ['ligas-regionales', 'Ligas Regionales']] },
   { slug: 'copa-argentina', nombre: 'Copa Argentina', torneo: 'Cuadro 2026', subs: [] },
   { slug: 'copas', nombre: 'Copas AFA', subs: [['trofeo-de-campeones', 'Trofeo de Campeones'], ['supercopa-argentina', 'Supercopa Argentina'], ['supercopa-internacional', 'Supercopa Internacional'], ['recopa-de-campeones', 'Recopa de Campeones']] },
+  { slug: 'conmebol', nombre: 'Copas CONMEBOL', subs: [['libertadores', 'Copa Libertadores'], ['sudamericana', 'Copa Sudamericana'], ['recopa', 'Recopa Sudamericana']] },
   { slug: 'inferiores', nombre: 'Inferiores', subs: [['reserva', 'Reserva'], ['cuarta', 'Cuarta'], ['quinta', 'Quinta'], ['sexta', 'Sexta'], ['septima', 'Séptima'], ['octava', 'Octava'], ['novena', 'Novena'], ['general', 'Tabla General de Inferiores'], ['fecha', 'Fecha por club']] },
 ];
 

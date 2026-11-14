@@ -26,6 +26,7 @@ export function menu() {
           </details>`).join('')}
       </div>
       <a href="/juegos" data-link class="menu__item menu__item--seccion" data-seccion="juegos">${icon('grilla', 22)}Juegos</a>
+      <a href="/seleccion" data-link class="menu__item menu__item--seccion" data-seccion="seleccion">${icon('camiseta', 22)}Selección Argentina</a>
     </div>
 
     <p class="menu__pie solo-tablas">${import.meta.env.MODE === 'artifact' ? '<span class="punto-vivo punto-vivo--apagado"></span> Vista previa con datos de ejemplo · ' : '<span class="punto-vivo"></span> Primera, Nacional y B en vivo (ESPN) · '}<a href="/admin" data-link class="menu__admin">Cargar resultados</a></p>
@@ -79,7 +80,7 @@ export function cerrarMenu() {
 
 export function marcarRutaActiva(path) {
   if (path === '/') path = '/tablas/primera'; // la portada es la tabla de Primera
-  const seccion = path.startsWith('/tablas') || path.startsWith('/equipo') ? 'tablas' : 'juegos';
+  const seccion = path.startsWith('/tablas') || path.startsWith('/equipo') ? 'tablas' : path.startsWith('/seleccion') ? 'seleccion' : 'juegos';
   document.body.dataset.seccion = seccion;
   document.querySelectorAll('.tabs__item, .menu__item--seccion').forEach((a) => {
     const activa = a.dataset.seccion === seccion;

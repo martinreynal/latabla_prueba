@@ -6,6 +6,8 @@ import { tabla } from './pages/tabla.js';
 import { primera } from './pages/primera.js';
 import { nacional } from './pages/nacional.js';
 import { copas } from './pages/copas.js';
+import { conmebol } from './pages/conmebol.js';
+import { seleccion } from './pages/seleccion.js';
 import { tercera } from './pages/tercera.js';
 import { copaArgentina } from './pages/copa-argentina.js';
 import { cuarta } from './pages/cuarta.js';
@@ -40,17 +42,18 @@ function simple(titulo, texto) {
 function resolver(path) {
   if (path === '/') return primera();
   if (path === '/juegos') return home();
+  if (path === '/seleccion') return seleccion();
   let m;
   if ((m = path.match(/^\/tablas\/([\w-]+)(?:\/([\w-]+))?$/))) {
     const [, g, sub] = m;
-    const paginas = { primera, segunda: nacional, tercera, cuarta, quinta, 'copa-argentina': copaArgentina, copas, inferiores };
+    const paginas = { primera, segunda: nacional, tercera, cuarta, quinta, 'copa-argentina': copaArgentina, copas, conmebol, inferiores };
     if (paginas[g]) return paginas[g](sub);
   }
   if ((m = path.match(/^\/tablas\/([\w-]+)$/))) return tabla(m[1]);
   if (path === '/admin') return admin();
   if ((m = path.match(/^\/equipo\/([\w-]+)$/))) return equipo(m[1]);
   if ((m = path.match(/^\/juegos\/([\w-]+)$/))) return juego(m[1], navegar);
-  if (path === '/como-se-juega') return simple('Cómo se juega', 'Cada día hay un desafío nuevo en cada juego. Resolvelos y compartí tu tabla.');
+  if (path === '/como-se-juega') return simple('Cómo se juega', 'Elegí un juego y jugalo las veces que quieras.');
   return null;
 }
 
