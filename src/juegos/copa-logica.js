@@ -23,11 +23,68 @@ export function empate90(idA, idB, rnd = Math.random) {
   for (const [goles, prob] of DISTRIBUCION_EMPATE) { if (r < prob) return goles; r -= prob; }
   return 0;
 }
-// Quién patea primero: 50 % cada uno, sorteado en cada partido.
-export const pateaPrimero = (rnd = Math.random) => (rnd() < 0.5 ? 'yo' : 'rival');
+/* ---------- Sorteo de moneda, elección de ventaja y presión de la tribuna ---------- */
+// Todo configurable desde acá.
+export const MONEDA = {
+  cara: 0.5,                 // probabilidad de que salga cara
+  rivalPateaPrimero: 0.983,  // si el rival gana el sorteo: 98,3 % patea primero, 1,7 % elige el lado
+  duracion: 2600,            // ms de la animación de la moneda
+  avisoRival: 2200,          // ms que se muestra la decisión del rival
+};
+export const PRESION = {
+  quinto: 0.5,                                   // 5.º penal del rival: regla especial
+  muerteSubita: [0.15, 0.25, 0.35, 0.45, 0.55],  // 6.º a 10.º penal del rival
+  tope: 0.6,                                     // 11.º en adelante
+  cursor: 1.3,                                   // velocidad del control de dirección con la tribuna en contra
+};
+
+// Sorteo de un partido. La moneda y la decisión que tomaría el rival se sortean acá, una sola vez y por separado,
+// antes de que el usuario elija nada: lo que elija no cambia ninguna probabilidad y recargar no lo repite.
+export function nuevoSorteo(rnd = Math.random) {
+  return {
+    coinChoice: null, coinResult: rnd() < MONEDA.cara ? 'cara' : 'cruz',
+    rivalElige: rnd() < MONEDA.rivalPateaPrimero ? 'patear' : 'lado',
+    tossWinner: null, decision: null, firstKicker: null, crowdTeam: null,
+    penaltyNumberByTeam: { yo: 0, rival: 0 }, specialMissProbability: 0, horizontalCursorSpeedMultiplier: 1,
+    especiales: {},          // n.º de penal del rival → si falla por arriba (se define una sola vez por ejecución)
+    listo: false,            // ya se mostró el resumen y empezó la tanda
+  };
+}
+// Decisión del ganador: 'patear' (patea primero, con la tribuna rival) o 'lado' (su hinchada, patea segundo).
+export function aplicarDecision(s, quien, decision) {
+  if (s.decision) return s;
+  const otro = quien === 'yo' ? 'rival' : 'yo';
+  s.decision = decision;
+  s.firstKicker = decision === 'patear' ? quien : otro;   // orden de pateadores
+  s.crowdTeam = decision === 'patear' ? otro : quien;     // tribuna
+  s.horizontalCursorSpeedMultiplier = s.crowdTeam === 'rival' ? PRESION.cursor : 1;
+  return s;
+}
+// El usuario elige cara o cruz. Solo cuenta la primera vez.
+export function elegirMoneda(s, eleccion) {
+  if (s.coinChoice) return s;
+  s.coinChoice = eleccion;
+  s.tossWinner = eleccion === s.coinResult ? 'yo' : 'rival';
+  if (s.tossWinner === 'rival') aplicarDecision(s, 'rival', s.rivalElige);
+  return s;
+}
+// Probabilidad de que el penal n.º n del rival se vaya por arriba (solo con la tribuna a favor del usuario).
+export function probFalloEspecial(n, crowdTeam) {
+  if (crowdTeam !== 'yo' || n < 5) return 0;
+  if (n === 5) return PRESION.quinto;
+  return PRESION.muerteSubita[n - 6] ?? PRESION.tope;
+}
+// ¿El penal n.º n del rival falla por arriba? Un solo cálculo por ejecución: queda guardado y no se repite.
+export function falloEspecial(s, n, rnd = Math.random) {
+  const prob = probFalloEspecial(n, s.crowdTeam);
+  s.specialMissProbability = prob;
+  if (!(n in s.especiales)) s.especiales[n] = prob > 0 && rnd() < prob;
+  return s.especiales[n];
+}
 
 export function prepararPartido(idYo, idRival, rnd = Math.random) {
-  return { empate: empate90(idYo, idRival, rnd), primero: pateaPrimero(rnd), mios: [], suyos: [] };
+  // primero queda sin definir hasta que se resuelve el sorteo de moneda
+  return { empate: empate90(idYo, idRival, rnd), primero: null, mios: [], suyos: [], sorteo: nuevoSorteo(rnd) };
 }
 
 /* ---------- Simulación de los partidos de los demás ---------- */

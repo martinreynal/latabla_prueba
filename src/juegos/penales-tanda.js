@@ -5,7 +5,7 @@
 //   PREPARACION → CARRERA → IMPACTO → BALON_EN_MOVIMIENTO → RESOLUCION → RECUPERACION → SIGUIENTE_PENAL
 // Las reglas viven en penales-logica.js, la física en penales-fisica.js, los cuerpos en penales-cuerpo.js
 // y el dibujo en penales-dibujo.js. Este archivo solo coordina: tiempos, turnos, entrada y marcador.
-import { ganador, remateUsuario, generarRemateRival, decidirArqueroIA, ARQUERO_IA } from './penales-logica.js';
+import { ganador, remateUsuario, generarRemateRival, generarRemateAlto, decidirArqueroIA, ARQUERO_IA } from './penales-logica.js';
 import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, crearPelota, patear, pasoPelota, definida, resultado, cruce } from './penales-fisica.js';
 import {
   REACCION, crearArquero, lanzarEstirada, afinarManos, momentoEstirada, poseArquero, arqueroDePie,
@@ -21,13 +21,16 @@ const T_RESOLUCION = 1.35;        // s que se deja correr la jugada después de 
 const T_FUNDIDO = 0.26;           // s del fundido al cambiar de pateador
 const ZONAS_X = [-2.44, 0, 2.44], ZONAS_Y = [0.45, 1.36, 2.27];
 
-// o: { yo, rival, ronda, esFinal, partido: { empate, primero, mios, suyos }, alPatear(), alTerminar(gano) }
+// o: { yo, rival, ronda, esFinal, partido: { empate, primero, mios, suyos }, alPatear(), alTerminar(gano),
+//      tribuna: 'yo' | 'rival' (quién tiene la hinchada detrás del arco), cursor: multiplicador de velocidad del control
+//      de dirección, falloRival(n): ¿el penal n.º n del rival se va por arriba por la presión? }
 export function crearTanda(cont, o) {
   const { yo, rival, partido } = o;
   const st = { fase: 'intro', t0: 0, mios: partido.mios, suyos: partido.suyos, animo: 'neutral', tAnimo: 0, fundido: -9 };
   const ctl = { activo: false, paso: 0, valores: [null, null, null], indicador: 0.5, faseInd: 0, ms0: 0 };
-  // La tribuna siempre alienta al que patea segundo. Es solo ambientación: no cambia ninguna probabilidad.
-  const hinchada = partido.primero === 'yo' ? rival : yo;
+  // La tribuna es del equipo que eligió el lado (el que patea segundo). No cambia de colores en toda la tanda.
+  const hinchada = (o.tribuna ?? (partido.primero === 'yo' ? 'rival' : 'yo')) === 'yo' ? yo : rival;
+  const cursor = o.cursor ?? 1;   // con la tribuna en contra, solo el control de dirección va más rápido
   const primeroEq = partido.primero === 'yo' ? yo : rival;
   const tribuna = crearTribuna(hinchada);
   const alambrado = crearAlambrado();
@@ -111,7 +114,7 @@ export function crearTanda(cont, o) {
       decir('Te toca patear.');
     } else {
       // El remate del rival y el momento en que arranca quedan sorteados acá. Nada de lo que haga el usuario los cambia.
-      const r = generarRemateRival();
+      const r = o.falloRival?.(st.suyos.length + 1) ? generarRemateAlto() : generarRemateRival();
       fijarRemate(r.obj, r.v0, reloj + ESPERA_RIVAL[0] + Math.random() * (ESPERA_RIVAL[1] - ESPERA_RIVAL[0]));
       ctl.activo = false;
       ayuda('Atajás vos · tocá el lugar del arco donde te vas a tirar. El rival patea cuando quiere.');
@@ -127,7 +130,7 @@ export function crearTanda(cont, o) {
   }
 
   /* ----- Entrada del usuario ----- */
-  const valorIndicador = (ms) => onda(ctl.faseInd + (ms - ctl.ms0) / PERIODO[ctl.paso]);
+  const valorIndicador = (ms) => onda(ctl.faseInd + (ms - ctl.ms0) * (ctl.paso === 0 ? cursor : 1) / PERIODO[ctl.paso]);
   function frenar() {
     const ms = performance.now();
     if (st.fase !== 'PREPARACION' || !ctl.activo || ms - ctl.ms0 < 220) return;
@@ -375,7 +378,7 @@ export function crearTanda(cont, o) {
   raf = requestAnimationFrame(bucle);
 
   // Para las pruebas automáticas: estado de solo lectura.
-  cont.firstElementChild.__penal = () => ({ fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
+  cont.firstElementChild.__penal = () => ({ cursor, hinchada: hinchada.id, fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
 
   return function destruir() {
     destruido = true;

@@ -1660,3 +1660,37 @@ a.tile:active { transform: translateY(0); }
   .pt__dias .btn-categoria { flex: 1 1 0; justify-content: center; }
 }
 @media (min-width: 900px) { .vista:has(.pt) { max-width: 1100px; } }
+
+/* ---------- Penales Copa Argentina: sorteo de moneda ---------- */
+.moneda { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: clamp(14px, 3vw, 28px) 14px; text-align: center; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris); }
+.moneda__cruce { margin: 0; font-family: var(--f-display); font-weight: 800; text-transform: uppercase; font-size: 13px; color: var(--blanco-2); }
+.moneda__cruce span { color: var(--amarillo); font-size: .8em; }
+.moneda__tit { margin: 0; font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; font-size: clamp(20px, 5.4vw, 32px); text-transform: uppercase; color: var(--blanco); }
+.moneda__tit--bien { color: var(--amarillo); }
+.moneda__tit--mal { color: #F3C9C0; }
+.moneda__aire { height: 120px; display: flex; align-items: flex-end; justify-content: center; perspective: 700px; margin-top: 150px; }
+.moneda__aire--quieta { margin-top: 4px; }
+.moneda__disco { position: relative; width: 104px; height: 104px; transform-style: preserve-3d; }
+.moneda__lado { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: radial-gradient(circle at 35% 30%, #F0E08A, var(--amarillo) 55%, #9C8C2C); border: 4px solid #8F8028; box-shadow: inset 0 0 0 5px rgba(255,255,255,.18); color: var(--negro); }
+.moneda__lado b { font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; font-size: 21px; letter-spacing: .02em; }
+.moneda__lado--cruz { transform: rotateX(180deg); background: radial-gradient(circle at 35% 30%, #A99BC4, var(--violeta) 55%, #40365A); border-color: #40365A; color: var(--blanco); }
+.moneda__sombra { width: 96px; height: 12px; border-radius: 50%; background: #000; opacity: .5; filter: blur(4px); margin-top: -4px; }
+.moneda__btns { display: flex; gap: 10px; }
+.moneda__btns .btn-principal { min-width: 120px; margin: 0; }
+.moneda .btn-principal, .moneda .btn-categoria { margin: 0; align-self: center; }
+.moneda__salio, .moneda__decision { margin: 0; color: var(--blanco-2); font-size: 14px; }
+.moneda__salio strong { color: var(--amarillo); text-transform: uppercase; }
+.moneda__decision { font-size: 16px; color: var(--blanco); max-width: 46ch; }
+.moneda__opciones, .moneda__resumen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 640px; }
+.moneda__opcion { display: flex; flex-direction: column; gap: 5px; padding: 14px; text-align: left; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--placa-oscura); color: var(--blanco); cursor: pointer; font: inherit; }
+.moneda__opcion:hover, .moneda__opcion:focus-visible { border-color: var(--amarillo); outline: none; box-shadow: 0 0 0 2px rgba(214,195,74,.4); }
+.moneda__opcion strong { font-family: var(--f-display); font-variation-settings: "wdth" 125; font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: 17px; color: var(--amarillo); }
+.moneda__opcion small { color: var(--blanco-2); font-size: 12.5px; line-height: 1.35; }
+.moneda__dato { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--placa-oscura); }
+.moneda__dato small { padding: 3px 10px; border-radius: 2px; background: var(--amarillo); color: var(--negro); font-family: var(--f-display); font-weight: 800; font-size: 11px; text-transform: uppercase; }
+.moneda__eq { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.moneda__eq strong { font-family: var(--f-display); font-weight: 800; text-transform: uppercase; font-size: 15px; }
+.moneda__nota { max-width: 52ch; }
+@media (max-width: 520px) { .moneda__opciones { grid-template-columns: 1fr; } }
+.moneda .pen__escudo--grande { width: 64px; height: 64px; }

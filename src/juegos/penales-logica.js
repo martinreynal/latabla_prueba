@@ -116,6 +116,11 @@ export function generarRemateRival(rnd = Math.random, tipos = TIPOS_REMATE) {
   return { tipo: t.tipo, obj: { x, y }, v0: entre(rnd, ...t.v0) };
 }
 
+// Remate que se va claramente por arriba del travesaño (presión de la tribuna). Se decide antes de la carrera.
+export function generarRemateAlto(rnd = Math.random) {
+  return { tipo: 'alto', obj: { x: (rnd() * 2 - 1) * 2.8, y: entre(rnd, 3.3, 4.4) }, v0: entre(rnd, 27, 31) };
+}
+
 // Arquero rival. cruce = { x, y, t }: por dónde y cuándo va a pasar la pelota a su altura.
 // A veces se la juega antes del remate (adivina) y a veces espera y reacciona, con menos tiempo para llegar.
 // Devuelve { obj, demora }: a dónde se tira y cuántos segundos después del impacto arranca (negativo = antes).

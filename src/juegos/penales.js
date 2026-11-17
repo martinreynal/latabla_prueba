@@ -2,7 +2,7 @@
 // Este archivo solo ordena las pantallas. La lógica está en copa-logica.js y penales-logica.js,
 // la tanda jugable en penales-tanda.js y el cuadro en copa-cuadro.js.
 import { EQUIPOS_COPA, CATEGORIAS, equipoCopa } from '../data/copa-equipos.js';
-import { RONDAS, nuevaCopa, cerrarRonda, partidoDe, rivalDe, cargarCopa, guardarCopa, borrarCopa } from './copa-logica.js';
+import { RONDAS, MONEDA, nuevaCopa, cerrarRonda, partidoDe, rivalDe, cargarCopa, guardarCopa, borrarCopa, elegirMoneda, aplicarDecision, falloEspecial } from './copa-logica.js';
 import { htmlCuadro, activarCuadro, trofeo } from './copa-cuadro.js';
 import { crearTanda } from './penales-tanda.js';
 import { escudoHtml } from './penales-dibujo.js';
@@ -173,16 +173,105 @@ export function montarPenales(raiz) {
     });
   }
 
+  /* ---------- 3b. Sorteo de moneda antes de cada partido ---------- */
+  function moneda(yo, rival) {
+    const s = copa.partido.sorteo;
+    const eq = (e) => `<span class="moneda__eq">${escudoHtml(e, 'pen__escudo--grande')}<strong>${e.nombre}</strong></span>`;
+    const cab = `<p class="pen__capa-ronda">Copa Argentina · ${RONDAS[copa.ronda]}</p><p class="moneda__cruce">${yo.corto} <span>vs</span> ${rival.corto}</p>`;
+    const disco = `<div class="moneda__aire"><div class="moneda__disco" id="moneda-disco"><span class="moneda__lado moneda__lado--cara"><b>CARA</b></span><span class="moneda__lado moneda__lado--cruz"><b>CRUZ</b></span></div></div><div class="moneda__sombra" id="moneda-sombra"></div>`;
+    let reloj = 0, anims = [];
+    limpiarYa();
+    function limpiarYa() { clearTimeout(reloj); anims.forEach((a) => a.cancel()); anims = []; }
+    const poner = (html) => { limpiarYa(); const el = pantalla(`<section class="moneda">${cab}${html}</section>`); limpiarPantalla = limpiarYa; return el; };
+
+    function elegirLado() {
+      const el = poner(`<h2 class="moneda__tit">Elegí cara o cruz</h2>${disco}
+        <div class="moneda__btns"><button type="button" class="btn-principal" data-lado="cara">Cara</button><button type="button" class="btn-principal" data-lado="cruz">Cruz</button></div>
+        <p class="copa__txt">El que gana el sorteo elige: patear primero o tener a su hinchada detrás del arco.</p>`);
+      el.querySelectorAll('[data-lado]').forEach((b) => b.addEventListener('click', () => {
+        elegirMoneda(s, b.dataset.lado);   // el resultado ya estaba sorteado: se guarda antes de animar
+        guardar();
+        lanzar();
+      }));
+    }
+    function lanzar() {
+      const el = poner(`<h2 class="moneda__tit">Elegiste ${s.coinChoice}</h2>${disco}<p class="copa__txt" role="status">La moneda está en el aire…</p>`);
+      const d = el.querySelector('#moneda-disco'), aire = d.parentElement, sombra = el.querySelector('#moneda-sombra');
+      const fin = 360 * 7 + (s.coinResult === 'cruz' ? 180 : 0);
+      const T = MONEDA.duracion;
+      if (!d.animate) { reloj = setTimeout(revelar, T); return; }
+      // Sube frenándose, cae acelerando, rebota apenas y se asienta; el giro se va frenando hasta mostrar el resultado.
+      anims = [
+        aire.animate([
+          { transform: 'translateY(0)', easing: 'cubic-bezier(.2,.7,.4,1)' },
+          { transform: 'translateY(-150px)', offset: 0.42, easing: 'cubic-bezier(.6,0,.9,.4)' },
+          { transform: 'translateY(0)', offset: 0.8, easing: 'ease-out' },
+          { transform: 'translateY(-16px)', offset: 0.88, easing: 'ease-in' },
+          { transform: 'translateY(0)', offset: 0.95 }, { transform: 'translateY(0)' }], { duration: T, fill: 'forwards' }),
+        d.animate([{ transform: 'rotateX(0deg)' }, { transform: `rotateX(${fin}deg)` }], { duration: T * 0.95, easing: 'cubic-bezier(.25,.6,.3,1)', fill: 'forwards' }),
+        sombra.animate([{ transform: 'scale(1)', opacity: 0.5 }, { transform: 'scale(.45)', opacity: 0.18, offset: 0.42 }, { transform: 'scale(1)', opacity: 0.5, offset: 0.8 }, { transform: 'scale(1)', opacity: 0.5 }], { duration: T, fill: 'forwards' }),
+      ];
+      reloj = setTimeout(revelar, T + 120);
+    }
+    const discoFijo = () => disco.replace('class="moneda__aire"', 'class="moneda__aire moneda__aire--quieta"').replace('class="moneda__disco"', `class="moneda__disco" style="transform:rotateX(${s.coinResult === 'cruz' ? 180 : 0}deg)"`);
+    function revelar() {
+      const salio = `<p class="moneda__salio">Salió <strong>${s.coinResult}</strong> · vos elegiste ${s.coinChoice}</p>`;
+      if (s.tossWinner === 'yo') {
+        if (s.decision) return resumen();
+        const el = poner(`<h2 class="moneda__tit moneda__tit--bien">¡Ganaste el sorteo!</h2>${discoFijo()}${salio}
+          <div class="moneda__opciones">
+            <button type="button" class="moneda__opcion" data-dec="patear"><strong>Patear primero</strong><span>Arrancás vos la tanda.</span><small>A cambio, la tribuna de atrás del arco es de ${rival.corto}: tu control de dirección va un 30 % más rápido.</small></button>
+            <button type="button" class="moneda__opcion" data-dec="lado"><strong>Elegir el lado</strong><span>Tu hinchada detrás del arco.</span><small>A cambio, patea primero ${rival.corto}. Con tu gente atrás, el rival puede tirarla por arriba desde su quinto penal.</small></button>
+          </div>`);
+        el.querySelectorAll('[data-dec]').forEach((b) => b.addEventListener('click', () => { aplicarDecision(s, 'yo', b.dataset.dec); guardar(); resumen(); }));
+        el.querySelector('[data-dec]').focus({ preventScroll: true });
+        return;
+      }
+      const el = poner(`<h2 class="moneda__tit moneda__tit--mal">Perdiste el sorteo</h2>${discoFijo()}${salio}
+        <p class="moneda__decision"><strong>${rival.nombre}</strong> eligió ${s.decision === 'patear' ? 'patear primero' : 'el lado: va a tener a su hinchada detrás del arco'}.</p>
+        <button type="button" class="btn-categoria" id="moneda-seguir">Seguir</button>`);
+      el.querySelector('#moneda-seguir').addEventListener('click', resumen);
+      reloj = setTimeout(resumen, MONEDA.avisoRival);   // la decisión del rival se muestra un momento y sigue sola
+    }
+    function resumen() {
+      const primero = s.firstKicker === 'yo' ? yo : rival, tribuna = s.crowdTeam === 'yo' ? yo : rival;
+      const nota = s.crowdTeam === 'yo'
+        ? 'Tu hinchada va a estar detrás del arco: desde su quinto penal, el rival puede tirarla por arriba del travesaño.'
+        : 'La tribuna es del rival: tu control de dirección se mueve un 30 % más rápido. La altura y la potencia no cambian.';
+      const el = poner(`<h2 class="moneda__tit">Así se juega</h2>
+        <div class="moneda__resumen">
+          <div class="moneda__dato"><small>Patea primero</small>${eq(primero)}</div>
+          <div class="moneda__dato"><small>Tribuna a favor</small>${eq(tribuna)}</div>
+        </div>
+        <p class="copa__txt moneda__nota">${nota}</p>
+        <button type="button" class="btn-principal" id="moneda-jugar">Empezar la tanda</button>`);
+      el.querySelector('#moneda-jugar').addEventListener('click', () => {
+        copa.partido.primero = s.firstKicker;
+        s.listo = true;
+        guardar();
+        partido();
+      });
+      el.querySelector('#moneda-jugar').focus({ preventScroll: true });
+    }
+    // Si se recargó a mitad del sorteo, se retoma donde estaba: la moneda no se vuelve a tirar.
+    if (!s.coinChoice) elegirLado(); else if (!s.decision) revelar(); else resumen();
+  }
+
   /* ---------- 4. Mi partido ---------- */
   function partido() {
     const yo = equipoCopa(copa.equipo);
     const rival = equipoCopa(rivalDe(partidoDe(copa, copa.equipo).m, copa.equipo));
+    const s = copa.partido.sorteo;          // las copas guardadas antes del sorteo de moneda no lo tienen
+    if (s && !s.listo) return moneda(yo, rival);
     copa.estado = 'jugando';
     guardar();
     const el = pantalla('<div id="copa-tanda"></div>');
     limpiarPantalla = crearTanda(el.querySelector('#copa-tanda'), {
       yo, rival, ronda: RONDAS[copa.ronda], esFinal: copa.ronda === RONDAS.length - 1, partido: copa.partido,
-      alPatear: guardar, // cada penal queda guardado: al recargar, la tanda sigue donde estaba
+      tribuna: s?.crowdTeam, cursor: s?.horizontalCursorSpeedMultiplier,
+      falloRival: s ? (n) => { const f = falloEspecial(s, n); guardar(); return f; } : null,
+      // cada penal queda guardado: al recargar, la tanda sigue donde estaba
+      alPatear() { if (s) s.penaltyNumberByTeam = { yo: copa.partido.mios.length, rival: copa.partido.suyos.length }; guardar(); },
       alTerminar() {
         cerrarRonda(copa, fuerza);
         guardar();
