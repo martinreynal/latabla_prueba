@@ -1347,7 +1347,7 @@ a.tile:active { transform: translateY(0); }
 .pen__tv-serie i.g { background: #36c24a; border-color: #8ff09a; }
 .pen__tv-serie i.e { background: #d8362b; border-color: #ff9a90; }
 .pen__tv-ms { text-align: center; color: var(--amarillo); font-weight: 800; font-size: clamp(7px, 1.7cqw, 11px); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-.pen__msg { top: 46%; }
+.pen__msg { top: 55%; }
 .pen__capa { overflow-y: auto; gap: clamp(5px, 1.6cqw, 12px); padding: clamp(8px, 2.5cqw, 18px); z-index: 2; }
 .pen__capa-tit { font-size: clamp(14px, 4.2cqw, 26px); }
 .pen__capa-txt, .pen__capa-res { font-size: clamp(12px, 2.6cqw, 15px); }

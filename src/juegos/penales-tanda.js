@@ -1,27 +1,39 @@
-// Una tanda de penales jugable: el usuario patea con tres controles y ataja adivinando el sector.
+// Una tanda de penales jugable. El usuario patea con tres controles y ataja eligiendo a dónde tirarse.
 // No sabe nada de la copa: recibe los dos equipos, el empate de los 90' y quién patea primero.
-import { ARCO, ARCO_CX, destino, clasificar, centroZona, zonaDe, probAtajada, arqueroIA, remateRival, duracionVuelo, ganador } from './penales-logica.js';
+//
+// Cada penal pasa por estos estados, siempre en este orden:
+//   PREPARACION → CARRERA → IMPACTO → BALON_EN_MOVIMIENTO → RESOLUCION → RECUPERACION → SIGUIENTE_PENAL
+// Las reglas viven en penales-logica.js, la física en penales-fisica.js, los cuerpos en penales-cuerpo.js
+// y el dibujo en penales-dibujo.js. Este archivo solo coordina: tiempos, turnos, entrada y marcador.
+import { ganador, remateUsuario, generarRemateRival, decidirArqueroIA, ARQUERO_IA } from './penales-logica.js';
+import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, crearPelota, patear, pasoPelota, definida, resultado, cruce } from './penales-fisica.js';
 import {
-  W, H, ESC, PISO_TRIBUNA, PELOTA0, PATEADOR0, PATEADOR1, ARQUERO0, PERIODO, clamp, lerp, suave, onda,
-  kitArquero, escudoHtml, figura, crearTribuna, crearAlambrado, pasto, arco, palos, pelotaDibujo, controles,
+  REACCION, crearArquero, lanzarEstirada, afinarManos, momentoEstirada, poseArquero, arqueroDePie,
+  articulaciones, partes, crearCarrera, poseEjecutante,
+} from './penales-cuerpo.js';
+import {
+  W, H, ESC, PISO_TRIBUNA, PERIODO, clamp, onda,
+  kitArquero, escudoHtml, cuerpoDibujo, crearTribuna, crearAlambrado, pasto, arco, palos, pelotaDibujo, controles,
 } from './penales-dibujo.js';
 
-// o: { yo, rival, ronda, partido: { empate, primero, mios, suyos }, alPatear(), alTerminar(gano) }
+const ESPERA_RIVAL = [2, 4];      // s: el rival arranca la carrera en algún momento de este rango, sin avisar
+const T_RESOLUCION = 1.35;        // s que se deja correr la jugada después de definirse
+const T_FUNDIDO = 0.26;           // s del fundido al cambiar de pateador
+const ZONAS_X = [-2.44, 0, 2.44], ZONAS_Y = [0.45, 1.36, 2.27];
+
+// o: { yo, rival, ronda, esFinal, partido: { empate, primero, mios, suyos }, alPatear(), alTerminar(gano) }
 export function crearTanda(cont, o) {
   const { yo, rival, partido } = o;
-  const st = {
-    fase: 'intro',            // intro · aviso · apuntar · atajar · carrera · vuelo · resultado · fin
-    mios: partido.mios, suyos: partido.suyos, turno: 'patear',
-    paso: 0, valores: [null, null, null], indicador: 0.5, faseInd: 0,
-    t0: 0, tiro: null, festejo: 0,
-  };
+  const st = { fase: 'intro', t0: 0, mios: partido.mios, suyos: partido.suyos, animo: 'neutral', tAnimo: 0, fundido: -9 };
+  const ctl = { activo: false, paso: 0, valores: [null, null, null], indicador: 0.5, faseInd: 0, ms0: 0 };
   // La tribuna siempre alienta al que patea segundo. Es solo ambientación: no cambia ninguna probabilidad.
   const hinchada = partido.primero === 'yo' ? rival : yo;
   const primeroEq = partido.primero === 'yo' ? yo : rival;
   const tribuna = crearTribuna(hinchada);
-  const alambrado = crearAlambrado(hinchada);
+  const alambrado = crearAlambrado();
   const kitArqYo = kitArquero(yo, rival), kitArqRival = kitArquero(rival, yo);
-  let raf = 0, destruido = false;
+  let reloj = 0, acumulado = 0, anterior = 0, raf = 0, destruido = false;
+  let pen = null;
 
   cont.innerHTML = `
     <div class="pen">
@@ -66,73 +78,175 @@ export function crearTanda(cont, o) {
     c.classList.toggle('visible', !!html);
     c.querySelector('button, a')?.focus({ preventScroll: true });
   }
-  const fase = (f) => { st.fase = f; st.t0 = performance.now(); };
+  const fase = (f) => { st.fase = f; st.t0 = reloj; cont.firstElementChild.dataset.estado = f; };
+  const en = () => reloj - st.t0;
 
-  /* ----- Flujo ----- */
+  /* ----- Turnos ----- */
   // Le toca patear al usuario si ya pateó menos, o si van iguales y él patea primero.
   const tocaAlUsuario = () => (partido.primero === 'yo' ? st.mios.length === st.suyos.length : st.mios.length < st.suyos.length);
+
+  function nuevoPenal() {
+    pen = {
+      pateaYo: tocaAlUsuario(), carrera: crearCarrera(), arq: crearArquero(), pelota: crearPelota(),
+      tInicio: reloj, tCarrera: null, tImpacto: null, vel: null, cruce: null,
+      eleccion: null, tEleccion: 0,      // a dónde eligió tirarse el usuario (cuando ataja)
+      planIA: null,                      // decisión del arquero rival (cuando patea el usuario)
+      amague: Math.random() * 6, res: null, tRes: 0, tRed: -9, jAnt: null,
+    };
+  }
+  function fijarRemate(obj, v0, tCarrera) {
+    pen.vel = velocidadHacia(obj, v0);
+    pen.cruce = cruce(pen.vel);                 // por dónde va a pasar: queda decidido antes del impacto
+    pen.tCarrera = tCarrera;
+    pen.tImpacto = tCarrera + pen.carrera.duracion;
+  }
+  function preparar() {
+    st.animo = 'neutral';
+    mensaje('');
+    fase('PREPARACION');
+    pen.tInicio = reloj;
+    if (pen.pateaYo) {
+      Object.assign(ctl, { activo: true, paso: 0, valores: [null, null, null], faseInd: Math.random(), ms0: performance.now() });
+      ayuda('Pateás vos · 1 de 3: tocá para frenar la dirección');
+      decir('Te toca patear.');
+    } else {
+      // El remate del rival y el momento en que arranca quedan sorteados acá. Nada de lo que haga el usuario los cambia.
+      const r = generarRemateRival();
+      fijarRemate(r.obj, r.v0, reloj + ESPERA_RIVAL[0] + Math.random() * (ESPERA_RIVAL[1] - ESPERA_RIVAL[0]));
+      ctl.activo = false;
+      ayuda('Atajás vos · tocá el lugar del arco donde te vas a tirar. El rival patea cuando quiere.');
+      decir('Te toca atajar. Elegí a dónde tirarte: el rival patea sin avisar.');
+    }
+  }
   function siguiente() {
     const g = ganador(st.mios, st.suyos);
     if (g) return terminar(g);
-    if (tocaAlUsuario()) turnoPatear(); else turnoAtajar();
+    st.fundido = reloj;
+    nuevoPenal();
+    preparar();
   }
-  function turnoPatear() {
-    st.turno = 'patear'; st.tiro = null;
-    st.valores = [null, null, null]; st.paso = 0; st.faseInd = Math.random();
-    mensaje('');
-    fase('apuntar');
-    ayuda('Pateás vos · 1 de 3: tocá para frenar la dirección');
-  }
-  function turnoAtajar() {
-    st.turno = 'atajar'; st.tiro = null;
-    mensaje('');
-    fase('atajar');
-    ayuda('Atajás vos · tocá el sector del arco donde te vas a tirar');
-    decir('Te toca atajar. Elegí un sector del arco.');
-  }
-  const valorIndicador = (ahora) => onda(st.faseInd + (ahora - st.t0) / PERIODO[st.paso]);
+
+  /* ----- Entrada del usuario ----- */
+  const valorIndicador = (ms) => onda(ctl.faseInd + (ms - ctl.ms0) / PERIODO[ctl.paso]);
   function frenar() {
-    const ahora = performance.now();
-    if (st.fase !== 'apuntar' || ahora - st.t0 < 220) return;
-    st.valores[st.paso] = valorIndicador(ahora);
-    if (st.paso < 2) {
-      st.paso++; st.t0 = ahora; st.faseInd = Math.random();
-      ayuda(st.paso === 1 ? '2 de 3: tocá para frenar la altura' : '3 de 3: tocá para frenar la potencia');
+    const ms = performance.now();
+    if (st.fase !== 'PREPARACION' || !ctl.activo || ms - ctl.ms0 < 220) return;
+    ctl.valores[ctl.paso] = valorIndicador(ms);
+    if (ctl.paso < 2) {
+      ctl.paso++; ctl.ms0 = ms; ctl.faseInd = Math.random();
+      ayuda(ctl.paso === 1 ? '2 de 3: tocá para frenar la altura' : '3 de 3: tocá para frenar la potencia');
       return;
     }
-    const [h, v, p] = [st.valores[0] * 2 - 1, st.valores[1], st.valores[2]];
-    const pt = destino(h, v, p);
-    const donde = clasificar(pt);
-    const zona = arqueroIA(pt, p);
-    let resultado = donde === 'adentro' ? 'gol' : donde;
-    if (donde === 'adentro' && Math.random() < probAtajada(zona, pt, p, true)) resultado = 'atajada';
-    st.tiro = { pt, p, dur: duracionVuelo(p), resultado, zona, demora: 40 + 110 * p };
+    ctl.activo = false;
+    const r = remateUsuario(ctl.valores[0] * 2 - 1, ctl.valores[1], ctl.valores[2]);
+    fijarRemate(r.obj, r.v0, reloj);
+    // El arquero rival decide ahora: o se la juega antes del remate o espera y reacciona.
+    const d = decidirArqueroIA(pen.cruce);
+    if (d.obj) pen.planIA = { obj: d.obj, tLanz: pen.tImpacto + (d.demora < 0 ? momentoEstirada(d.obj, pen.cruce.t) : d.demora) };
     ayuda('');
-    fase('carrera');
+    fase('CARRERA');
   }
-  function elegirZona(zona) {
-    if (st.fase !== 'atajar' || performance.now() - st.t0 < 220) return;
-    const { pt, p } = remateRival();
-    const donde = clasificar(pt);
-    let resultado = donde === 'adentro' ? 'gol' : donde;
-    if (donde === 'adentro' && Math.random() < probAtajada(zona, pt, p)) resultado = 'atajada';
-    st.tiro = { pt, p, dur: duracionVuelo(p), resultado, zona, demora: 0 };
-    ayuda('');
-    fase('carrera');
+  // El usuario elige a dónde tirarse. Puede cambiar de idea hasta que el arquero se lanza; después, ya no.
+  function elegir(obj) {
+    if (!pen || pen.pateaYo || pen.arq.plan || pen.res) return;
+    if (!['PREPARACION', 'CARRERA', 'BALON_EN_MOVIMIENTO'].includes(st.fase)) return;
+    if (st.fase === 'PREPARACION' && en() < 0.2) return;
+    pen.eleccion = { x: clamp(obj.x, -3.5, 3.5), y: clamp(obj.y, 0.2, 2.5) };
+    pen.tEleccion = reloj;
+    if (st.fase === 'PREPARACION') ayuda('Listo. Podés cambiar de lugar hasta que el arquero se tire.');
   }
-  function llego() {
-    const t = st.tiro;
-    const pateo = st.turno === 'patear';
-    const gol = t.resultado === 'gol';
-    (pateo ? st.mios : st.suyos).push(gol);
+
+  /* ----- Simulación (paso fijo) ----- */
+  function arqueroPaso() {
+    const a = pen.arq;
+    if (a.plan) {
+      // Ya en el aire: con la pelota viajando, acomoda las manos hasta donde le da el brazo.
+      if (pen.pelota.enJuego) afinarManos(a, pen.cruce, reloj, pen.pateaYo ? ARQUERO_IA.radio : undefined);
+      return;
+    }
+    if (pen.res || !pen.tImpacto) {
+      if (pen.pateaYo && !pen.res) a.inclinacion = 0.45 * Math.sin(reloj * 1.3 + pen.amague) * Math.sin(reloj * 0.7); // amaga mientras el usuario apunta
+      return;
+    }
+    if (pen.pateaYo) {
+      a.inclinacion *= 0.97;
+      if (pen.planIA && reloj >= pen.planIA.tLanz) lanzarEstirada(a, pen.planIA.obj, reloj);
+      return;
+    }
+    // Ataja el usuario. Sin elección, el arquero se queda parado en el centro.
+    const e = pen.eleccion;
+    a.inclinacion += ((e ? clamp(e.x / 2.2, -1, 1) : 0) - a.inclinacion) * 0.03;
+    if (!e) return;
+    // Si eligió con tiempo, se lanza en el momento justo. Si eligió tarde, sale apenas puede y llega más tarde:
+    // esa demora es real y puede alcanzar o no, según a dónde vaya la pelota.
+    const tLanz = Math.max(pen.tEleccion + REACCION, pen.tImpacto + momentoEstirada(e, pen.cruce.t, a.inclinacion * 0.16));
+    if (reloj >= tLanz) lanzarEstirada(a, e, reloj);
+  }
+  function resolver() {
+    const b = pen.pelota;
+    pen.res = resultado(b); pen.tRes = reloj;
+    if (pen.res !== 'gol') b.afuera = true;      // la jugada ya está juzgada: no puede convertirse en gol después
+    const gol = pen.res === 'gol', pateo = pen.pateaYo;
+    (pateo ? st.mios : st.suyos).push(gol);     // se anota una sola vez por penal
     o.alPatear?.();
     const textos = { gol: '¡Gol!', atajada: pateo ? 'Atajó el arquero' : '¡Atajaste!', palo: '¡Palo!', afuera: 'Afuera' };
-    mensaje(textos[t.resultado], (pateo ? gol : !gol) ? 'bien' : 'mal');
-    if (gol) st.festejo = performance.now();
+    mensaje(textos[pen.res], (pateo ? gol : !gol) ? 'bien' : 'mal');
+    const favorecido = (pateo === gol) ? yo : rival;
+    st.animo = favorecido === hinchada ? 'festejo' : 'bronca'; st.tAnimo = reloj;
     marcador();
-    decir(`${pateo ? yo.nombre : rival.nombre}: ${textos[t.resultado].replace(/[¡!]/g, '')}. Penales: ${goles(st.mios)} a ${goles(st.suyos)}.`);
-    fase('resultado');
+    decir(`${pateo ? yo.nombre : rival.nombre}: ${textos[pen.res].replace(/[¡!]/g, '')}. Penales: ${goles(st.mios)} a ${goles(st.suyos)}.`);
+    fase('RESOLUCION');
   }
+  function pelotaPaso() {
+    const b = pen.pelota;
+    if (!b.enJuego) return;
+    let cuerpo = null;
+    if (Math.abs(b.z - CANCHA.Z_ARQUERO) < 1) {
+      const j = articulaciones(poseArquero(pen.arq, reloj));
+      cuerpo = partes(j, pen.jAnt, DT);
+      pen.jAnt = j;
+    } else pen.jAnt = null;
+    pasoPelota(b, cuerpo);
+    if (b.eventos.includes('red')) pen.tRed = reloj;
+  }
+  function paso() {
+    reloj += DT;
+    if (!pen) return;
+    switch (st.fase) {
+      case 'aviso': if (en() > 1.5) preparar(); break;
+      case 'PREPARACION':
+        arqueroPaso();
+        if (!pen.pateaYo && reloj >= pen.tCarrera) { ayuda(pen.eleccion ? '' : 'Tocá el arco para tirarte'); fase('CARRERA'); }
+        break;
+      case 'CARRERA':
+        arqueroPaso();
+        if (reloj >= pen.tImpacto) fase('IMPACTO');
+        break;
+      case 'IMPACTO':                              // la pelota sale en el instante exacto del contacto con el pie
+        patear(pen.pelota, pen.vel);
+        ayuda('');
+        fase('BALON_EN_MOVIMIENTO');
+        break;
+      case 'BALON_EN_MOVIMIENTO':
+        arqueroPaso(); pelotaPaso();
+        if (pen.pelota.t > 0.12 && definida(pen.pelota)) resolver();
+        break;
+      case 'RESOLUCION':
+        arqueroPaso(); pelotaPaso();
+        if (en() >= T_RESOLUCION) fase('RECUPERACION');
+        break;
+      case 'RECUPERACION':                         // se espera a que el arquero termine de caer y se levante
+        arqueroPaso(); pelotaPaso();
+        if ((en() > 0.35 && arqueroDePie(pen.arq, reloj)) || en() > 3.4) fase('SIGUIENTE_PENAL');
+        break;
+      case 'SIGUIENTE_PENAL':
+        pelotaPaso();
+        if (en() >= T_FUNDIDO || ganador(st.mios, st.suyos)) siguiente();
+        break;
+      default:
+    }
+  }
+
   function terminar(g) {
     fase('fin');
     marcador(); mensaje(''); ayuda('');
@@ -157,152 +271,111 @@ export function crearTanda(cont, o) {
       <div class="pen__capa-btns"><button type="button" class="btn-principal" data-jugar>${empezada ? 'Continuar' : 'Jugar'}</button></div>`);
     $('capa').querySelector('[data-jugar]').addEventListener('click', () => {
       capa('');
-      if (empezada) return siguiente();
+      if (empezada) return preparar();
       mensaje(`${primeroEq.corto} patea primero`, 'bien');
       decir(`${primeroEq.nombre} patea primero.`);
       fase('aviso');
     });
   }
 
-  /* ----- Posturas ----- */
-  function posturaArquero(ahora) {
-    const t = st.tiro;
-    const base = { x: ARQUERO0.x, y: ARQUERO0.y, rot: 0, brazos: 0.22, agachado: 0.25 + Math.sin(ahora / 260) * 0.08 };
-    if (!t || ['carrera', 'apuntar', 'atajar', 'aviso', 'intro'].includes(st.fase)) {
-      if (st.fase === 'carrera') base.x += Math.sin(ahora / 90) * 3;
-      return base;
-    }
-    const desde = st.fase === 'vuelo' ? ahora - st.t0 - t.demora : 1e6;
-    const k = suave(clamp(desde / Math.min(t.dur * 0.95, 360), 0, 1));
-    const z = centroZona(t.zona.col, t.zona.fila);
-    const lado = t.zona.col - 1;
-    let fin;
-    if (lado === 0) {
-      fin = t.zona.fila === 2 ? { x: base.x, y: base.y - 26, rot: 0, brazos: 1, agachado: 0 }
-        : t.zona.fila === 1 ? { x: base.x, y: base.y, rot: 0, brazos: 0.5, agachado: 0.1 }
-          : { x: base.x, y: base.y + 8, rot: 0, brazos: 0.12, agachado: 1 };
-    } else {
-      const vx = z.x - base.x, vy = z.y - base.y;
-      const d = Math.hypot(vx, vy), largo = 56;
-      fin = { x: base.x + (vx / d) * (d - largo), y: base.y + (vy / d) * (d - largo), rot: Math.atan2(vx, -vy), brazos: 1, agachado: 0 };
-    }
-    const cae = st.fase === 'resultado' && lado !== 0 ? suave(clamp((ahora - st.t0) / 420, 0, 1)) : 0;
-    return {
-      x: lerp(base.x, fin.x, k), y: lerp(lerp(base.y, fin.y, k), 246, cae * 0.85),
-      rot: lerp(0, fin.rot, k) + cae * lado * 0.25, brazos: lerp(base.brazos, fin.brazos, k), agachado: lerp(base.agachado, fin.agachado, k),
-    };
+  /* ----- Dibujo ----- */
+  function sombra(x, z, ancho, alfa) {
+    const p = proyectar(x, 0, z);
+    ctx.fillStyle = `rgba(0,0,0,${alfa})`;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, ancho * p.s, ancho * p.s * 0.26, 0, 0, 7); ctx.fill();
   }
-  const manosArquero = (a) => ({ x: a.x + Math.sin(a.rot) * 56, y: a.y - Math.cos(a.rot) * 56 * (a.brazos > 0.6 ? 1 : 0.45) });
-  function posturaPateador(ahora) {
-    const en = ahora - st.t0;
-    if (st.fase === 'carrera') {
-      const k = clamp(en / 620, 0, 1);
-      return { x: lerp(PATEADOR0.x, PATEADOR1.x, k), y: lerp(PATEADOR0.y, PATEADOR1.y, k), s: lerp(PATEADOR0.s, PATEADOR1.s, k), paso: Math.sin(k * Math.PI * 5), patada: clamp((k - 0.82) / 0.18, 0, 1), brazos: 0.2 + Math.abs(Math.sin(k * Math.PI * 5)) * 0.12 };
-    }
-    if (st.fase === 'vuelo') return { ...PATEADOR1, paso: 0, patada: clamp(1 - en / 200, 0, 1), brazos: 0.25 };
-    if ((st.fase === 'resultado' || st.fase === 'fin') && st.tiro) {
-      const gol = st.tiro.resultado === 'gol';
-      const k = suave(clamp(en / 300, 0, 1));
-      return { ...PATEADOR1, y: PATEADOR1.y - (gol ? Math.abs(Math.sin(en / 170)) * 9 : 0), paso: 0, patada: 0, brazos: lerp(0.25, gol ? 1 : 0.72, k) };
-    }
-    return { ...PATEADOR0, paso: 0, patada: 0, brazos: 0.12 };
+  function dibujarPelota(b) {
+    if (b.z < -5) return;                     // rebotó hasta detrás de la cámara: ya no se ve
+    const p = proyectar(b.x, b.y, b.z);
+    const lejos = b.z > CANCHA.LINEA + CANCHA.FONDO_RED ? clamp(1.6 - (b.z - CANCHA.LINEA) / 9, 0, 1) : 1;
+    if (!b.gol && lejos > 0) sombra(b.x, b.z, 0.13, 0.26 * lejos * clamp(1 - b.y / 3.5, 0.15, 1));
+    pelotaDibujo(ctx, p.x, p.y, CANCHA.RADIO_PELOTA * p.s, b.giro, lejos);
   }
-  function posturaPelota(ahora, arq) {
-    const t = st.tiro;
-    if (!t || !['vuelo', 'resultado', 'fin'].includes(st.fase)) return { ...PELOTA0, r: 8.5, giro: 0, alfa: 1, lejos: false };
-    const en = ahora - st.t0;
-    if (st.fase === 'vuelo') {
-      const k = clamp(en / t.dur, 0, 1);
-      const curva = Math.sin(k * Math.PI) * (5 + 16 * (1 - t.p));
-      return { x: lerp(PELOTA0.x, t.pt.x, k), y: lerp(PELOTA0.y, t.pt.y, k) - curva, r: lerp(8.5, 5.2, k), giro: k * 9, alfa: 1, lejos: true };
-    }
-    const u = clamp(en / 600, 0, 1.6);
-    const lado = Math.sign(t.pt.x - ARCO_CX) || 1;
-    if (t.resultado === 'gol') {
-      const k = clamp(en / 380, 0, 1);
-      return { x: t.pt.x + lado * 5 * k, y: lerp(t.pt.y, ARCO.y2 - 6, k * k), r: 5, giro: 9 + k * 2, alfa: 1, lejos: true, enRed: true };
-    }
-    if (t.resultado === 'atajada') {
-      const m = manosArquero(arq);
-      if (Math.hypot(m.x - t.pt.x, m.y - t.pt.y) < 20) return { x: m.x, y: m.y, r: 5.4, giro: 9, alfa: 1, lejos: true };
-      return { x: t.pt.x + lado * 70 * u, y: Math.min(t.pt.y - 70 * u + 150 * u * u, 300), r: 5.2 + u, giro: 9 + u * 6, alfa: 1, lejos: true };
-    }
-    if (t.resultado === 'palo') {
-      return { x: t.pt.x - lado * 46 * u + (t.pt.y < ARCO.y1 + 6 ? lado * 20 * u : 0), y: Math.min(t.pt.y + 20 * u + 150 * u * u, 330), r: 5.2 + u * 1.6, giro: 9 - u * 6, alfa: 1, lejos: true };
-    }
-    const dx = t.pt.x - PELOTA0.x, dy = t.pt.y - PELOTA0.y;
-    return { x: t.pt.x + dx * 0.22 * u, y: t.pt.y + dy * 0.22 * u, r: Math.max(5.2 - u * 1.2, 3.4), giro: 9 + u * 5, alfa: clamp(1.5 - u, 0, 1), lejos: true };
-  }
-
-  /* ----- Bucle ----- */
-  function avanzar(ahora) {
-    const en = ahora - st.t0;
-    if (st.fase === 'apuntar') st.indicador = valorIndicador(ahora);
-    else if (st.fase === 'aviso' && en > 1500) siguiente();
-    else if (st.fase === 'atajar' && en > 6000) elegirZona({ col: 1, fila: 1 }); // si no elegís, se queda parado
-    else if (st.fase === 'carrera' && en >= 620) fase('vuelo');
-    else if (st.fase === 'vuelo' && en >= st.tiro.dur) llego();
-    else if (st.fase === 'resultado' && en >= 1700) siguiente();
-  }
-  function dibujar(ahora) {
+  function dibujar(ms) {
     ctx.setTransform(ESC, 0, 0, ESC, 0, 0);
-    const salto = st.festejo && ahora - st.festejo < 1500 ? Math.abs(Math.sin((ahora - st.festejo) / 110)) * 3.5 : 0;
-    ctx.drawImage(tribuna, 0, -salto, W, PISO_TRIBUNA + 12);
+    const tAnimo = reloj - st.tAnimo;
+    tribuna.dibujar(ctx, reloj, st.animo, tAnimo);
     ctx.drawImage(alambrado, 0, 0, W, PISO_TRIBUNA + 12);
+    tribuna.dibujarTrepados(ctx, reloj, st.animo, tAnimo);
     pasto(ctx);
-    // Antes del primer penal, el pateador que se ve es el del equipo que arranca.
-    const pateoYo = ['intro', 'aviso'].includes(st.fase) && !st.tiro ? tocaAlUsuario() : st.turno === 'patear';
-    const arq = posturaArquero(ahora);
-    const pat = posturaPateador(ahora);
-    const pel = posturaPelota(ahora, arq);
-    const enRed = st.fase === 'resultado' && st.tiro?.resultado === 'gol';
-    arco(ctx, enRed ? Math.sin((ahora - st.t0) / 60) * 5 * Math.max(0, 1 - (ahora - st.t0) / 700) : 0);
-    if (pel.enRed) pelotaDibujo(ctx, pel.x, pel.y, pel.r, pel.giro);
+    if (!pen) return;
+    const b = pen.pelota, ZA = CANCHA.Z_ARQUERO;
+
+    // Arquero: de la pose a las articulaciones y de ahí a la pantalla
+    const ja = articulaciones(poseArquero(pen.arq, reloj));
+    if (b.atrapada) { b.x = (ja.manoL.x + ja.manoR.x) / 2; b.y = Math.max(CANCHA.RADIO_PELOTA, (ja.manoL.y + ja.manoR.y) / 2); b.z = ZA - 0.14; }
+    // Ejecutante
+    const tau = pen.tCarrera === null ? -(reloj - pen.tInicio) - 0.01 : reloj - pen.tCarrera;
+    const animoEj = pen.res ? (pen.res === 'gol' ? 'festeja' : 'lamenta') : null;
+    const ej = poseEjecutante(pen.carrera, tau, animoEj, reloj - pen.tRes);
+    const je = articulaciones(ej.pose);
+
+    const detras = b.z > CANCHA.LINEA;           // la pelota ya pasó la línea: adentro del arco o afuera
+    if (detras && !b.gol) dibujarPelota(b);
+    const dRed = reloj - pen.tRed;
+    arco(ctx, dRed < 0.8 ? Math.sin(dRed * 17) * 5 * (1 - dRed / 0.8) : 0);
+    if (detras && b.gol) dibujarPelota(b);
     palos(ctx);
-    ctx.fillStyle = 'rgba(0,0,0,.22)';
-    ctx.beginPath(); ctx.ellipse(arq.x, 268, 20, 5, 0, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(pat.x, pat.y + 42 * pat.s, 20 * pat.s, 5.5 * pat.s, 0, 0, 7); ctx.fill();
-    figura(ctx, { ...arq, s: 1, kit: pateoYo ? kitArqRival : kitArqYo, espalda: false });
-    if (pel.lejos && !pel.enRed) pelotaDibujo(ctx, pel.x, pel.y, pel.r, pel.giro, pel.alfa);
-    figura(ctx, { ...pat, kit: pateoYo ? yo : rival, espalda: true });
-    if (!pel.lejos) {
-      ctx.fillStyle = 'rgba(0,0,0,.25)';
-      ctx.beginPath(); ctx.ellipse(pel.x + 2, pel.y + 7, 9, 3, 0, 0, 7); ctx.fill();
-      pelotaDibujo(ctx, pel.x, pel.y, pel.r, pel.giro);
+    if (!detras && b.z > ZA) dibujarPelota(b);
+    sombra(ja.cadera.x, ZA, 0.34 + 0.3 * Math.abs(Math.sin(poseArquero(pen.arq, reloj).th)), 0.22);
+    const sa = escala(ZA);
+    cuerpoDibujo(ctx, ja, (q) => proyectar(q.x, q.y, ZA), sa, pen.pateaYo ? kitArqRival : kitArqYo, { guantes: true });
+    // Marca discreta del lugar elegido por el usuario (solo su propia elección, nunca la del rival)
+    if (!pen.pateaYo && pen.eleccion && !pen.arq.plan) {
+      const m = proyectar(pen.eleccion.x, pen.eleccion.y, ZA);
+      ctx.strokeStyle = 'rgba(214,195,74,.85)'; ctx.lineWidth = 1.6; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.arc(m.x, m.y, 9, 0, 7); ctx.stroke(); ctx.setLineDash([]);
     }
-    if (st.turno === 'patear' && ['apuntar', 'carrera', 'vuelo'].includes(st.fase)) controles(ctx, st, ahora, cv.clientWidth < 520);
+    if (b.z <= ZA && b.z >= ej.z) dibujarPelota(b);
+    sombra(je.cadera.x, ej.z, 0.32, 0.22);
+    cuerpoDibujo(ctx, je, (q) => proyectar(q.x, q.y, ej.z), escala(ej.z), pen.pateaYo ? yo : rival, { espalda: true });
+    if (b.z < ej.z) dibujarPelota(b);
+
+    if (pen.pateaYo && ['PREPARACION', 'CARRERA', 'IMPACTO', 'BALON_EN_MOVIMIENTO'].includes(st.fase)) {
+      if (ctl.activo) ctl.indicador = valorIndicador(ms);
+      controles(ctx, ctl, ms, cv.clientWidth < 520);
+    }
+    // Fundido corto al cambiar de pateador, para que nadie "aparezca" de golpe en otro lugar
+    const f = st.fase === 'SIGUIENTE_PENAL' ? en() / T_FUNDIDO : 1 - (reloj - st.fundido) / T_FUNDIDO;
+    if (f > 0) { ctx.fillStyle = `rgba(10,14,20,${clamp(f, 0, 1) * 0.92})`; ctx.fillRect(0, PISO_TRIBUNA, W, H - PISO_TRIBUNA); }
   }
-  function bucle(ahora) {
+  function bucle(ms) {
     if (destruido) return;
-    avanzar(ahora);
-    dibujar(ahora);
+    // Paso fijo: la simulación avanza siempre de a 1/240 s, sin importar los cuadros por segundo de la pantalla.
+    acumulado += Math.min(0.1, (ms - (anterior || ms)) / 1000);
+    anterior = ms;
+    while (acumulado >= DT) { paso(); acumulado -= DT; }
+    dibujar(ms);
     raf = requestAnimationFrame(bucle);
   }
 
-  /* ----- Entrada ----- */
+  /* ----- Eventos ----- */
   cv.addEventListener('pointerdown', (ev) => {
     ev.preventDefault();
-    if (st.fase === 'apuntar') return frenar();
-    if (st.fase !== 'atajar') return;
+    if (pen?.pateaYo) return frenar();
     const r = cv.getBoundingClientRect();
-    const p = { x: ((ev.clientX - r.left) / r.width) * W, y: ((ev.clientY - r.top) / r.height) * H };
-    if (p.y > 330) return; // lejos del arco: no cuenta
-    elegirZona(zonaDe(p));
+    const px = ((ev.clientX - r.left) / r.width) * W, py = ((ev.clientY - r.top) / r.height) * H;
+    if (py > 330) return; // lejos del arco: no cuenta
+    elegir(pantallaAArco(px, py, CANCHA.Z_ARQUERO));
   });
   const TECLAS = { q: [0, 2], w: [1, 2], e: [2, 2], a: [0, 1], s: [1, 1], d: [2, 1], z: [0, 0], x: [1, 0], c: [2, 0] };
   function tecla(ev) {
-    if (ev.target.closest('button, input, select, textarea, a')) return;
+    if (ev.target.closest('button, input, select, textarea, a') || !pen) return;
     const k = ev.key.toLowerCase();
-    if ((k === ' ' || k === 'enter') && st.fase === 'apuntar') { ev.preventDefault(); frenar(); }
-    else if (TECLAS[k] && st.fase === 'atajar') { ev.preventDefault(); elegirZona({ col: TECLAS[k][0], fila: TECLAS[k][1] }); }
+    if ((k === ' ' || k === 'enter') && pen.pateaYo && ctl.activo) { ev.preventDefault(); frenar(); }
+    else if (TECLAS[k] && !pen.pateaYo) { ev.preventDefault(); elegir({ x: ZONAS_X[TECLAS[k][0]], y: ZONAS_Y[TECLAS[k][1]] }); }
   }
   document.addEventListener('keydown', tecla);
 
   marcador();
+  nuevoPenal();
   // Si se recargó justo después del último penal, la tanda ya está definida.
   const yaDefinida = ganador(st.mios, st.suyos);
   if (yaDefinida) terminar(yaDefinida); else presentar();
   raf = requestAnimationFrame(bucle);
+
+  // Para las pruebas automáticas: estado de solo lectura.
+  cont.firstElementChild.__penal = () => ({ fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
 
   return function destruir() {
     destruido = true;
