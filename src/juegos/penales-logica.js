@@ -146,6 +146,12 @@ export function generarRemateRival(rnd = Math.random, tipos = TIPOS_REMATE) {
   return { tipo: t.tipo, obj: { x, y }, v0: entre(rnd, ...t.v0) };
 }
 
+// Panenka: globito suave, picado por debajo, que cae al centro del arco. No es gol seguro:
+// si el arquero se queda en el medio, la puede agarrar.
+export function generarPanenka(rnd = Math.random) {
+  return { tipo: 'panenka', obj: { x: gauss(rnd) * 0.22, y: entre(rnd, 1.15, 1.6) }, angulo: entre(rnd, 0.55, 0.68) };
+}
+
 // Remate que se va claramente por arriba del travesaño (presión de la tribuna). Se decide antes de la carrera.
 export function generarRemateAlto(rnd = Math.random) {
   return { tipo: 'alto', obj: { x: (rnd() * 2 - 1) * 2.8, y: entre(rnd, 3.3, 4.4) }, v0: entre(rnd, 27, 31) };

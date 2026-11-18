@@ -28,9 +28,17 @@ export function distanciaColor(a, b) {
   return Math.abs((x >> 16) - (y >> 16)) + Math.abs(((x >> 8) & 255) - ((y >> 8) & 255)) + Math.abs((x & 255) - (y & 255));
 }
 // Buzo de arquero: el primer color que no se confunda con ninguna de las dos camisetas.
+// Lleva una banda con el color principal del club, para que conserve la identidad del equipo.
 export function kitArquero(propio, otro) {
   const c = ['#f0d020', '#2fb463', '#ff7a1a', '#8f8f95'].find((x) => distanciaColor(x, propio.c1) > 200 && distanciaColor(x, otro.c1) > 200) ?? '#8f8f95';
-  return { c1: c, c2: c, patron: 'liso', pant: oscurecer(c, 0.55), medias: c, guantes: true };
+  const banda = distanciaColor(c, propio.c1) > 120 ? propio.c1 : propio.c2;
+  return { c1: c, c2: banda, patron: 'banda', pant: oscurecer(c, 0.55), medias: c, guantes: true, arquero: true };
+}
+// Color del número: el que más contrasta con la camiseta, con un borde del color opuesto.
+function luz(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
+export function colorDorsal(kit) {
+  const base = kit.patron === 'liso' || kit.patron === 'banda' ? luz(kit.c1) : (luz(kit.c1) + luz(kit.c2)) / 2;
+  return base > 0.58 ? { relleno: '#15151a', borde: 'rgba(255,255,255,.55)' } : { relleno: '#ffffff', borde: 'rgba(0,0,0,.55)' };
 }
 
 // Fondo CSS que imita la camiseta, para cuando no hay imagen del escudo.
@@ -152,6 +160,17 @@ export function cuerpoDibujo(ctx, j, P, s, kit, o = {}) {
   ctx.save();
   ctx.translate(q.cadera.x, q.cadera.y); ctx.rotate(ang);
   camiseta(ctx, kit, -0.215 * s, -largo - 0.07 * s, 0.43 * s, largo + 0.1 * s);
+  // Dorsal: dibujado dentro de la camiseta, así gira y se inclina con el torso.
+  // De espaldas, grande en el medio; de frente, chico en el pecho.
+  if (o.dorsal != null) {
+    const col = colorDorsal(kit), alto = (o.espalda ? 0.22 : 0.085) * s;
+    ctx.font = `800 ${alto.toFixed(1)}px Saira, 'Arial Black', 'Arial Narrow', sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const x = o.espalda ? 0 : -0.08 * s, y = -largo * (o.espalda ? 0.58 : 0.74);
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(1, alto * 0.12); ctx.strokeStyle = col.borde;
+    ctx.strokeText(String(o.dorsal), x, y);
+    ctx.fillStyle = col.relleno; ctx.fillText(String(o.dorsal), x, y);
+  }
   ctx.restore();
   // Cuello y cabeza
   linea(q.pecho, q.cabeza, 0.085, PIEL);

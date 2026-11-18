@@ -293,13 +293,16 @@ const PELOTA_EN_PLANO = { x: 0.0, y: 0.2 };
 const APOYO = { x: -0.26, y: 0.06 };          // pie de apoyo, al costado de la pelota
 
 // Cada carrera es distinta: cantidad de pasos, velocidad, inclinación y, a veces, un freno antes de pegarle.
-export function crearCarrera(rnd = Math.random) {
+// panenka: carrera normal que frena al final, con un golpe más lento y corto que pica la pelota por debajo.
+export function crearCarrera(rnd = Math.random, { panenka = false } = {}) {
   const pasos = 3 + Math.floor(rnd() * 3);
-  return {
-    pasos, duracion: 0.72 + 0.11 * pasos * (0.75 + rnd() * 0.5), freno: rnd() < 0.14,
+  const c = {
+    pasos, duracion: 0.72 + 0.11 * pasos * (0.75 + rnd() * 0.5), freno: panenka || rnd() < 0.14, panenka,
     inicio: { x: -1.2 - rnd() * 0.6, z: -1.25 - 0.2 * pasos }, llegada: { x: -0.15, z: -0.26 },
     inclin: 0.04 + rnd() * 0.07, brazos: 0.35 + rnd() * 0.35, golpe: 0.2 + rnd() * 0.06,
   };
+  if (panenka) { c.golpe = 0.3 + rnd() * 0.05; c.duracion += 0.08; }
+  return c;
 }
 
 // tau: segundos desde que arranca la carrera (negativo = todavía esperando). El impacto es en tau = c.duracion.
@@ -331,9 +334,9 @@ export function poseEjecutante(c, tau, animo, tAnimo = 0) {
     // Pierna ejecutora: arranca apoyada, se recoge hacia atrás (de espaldas se ve la pierna plegada),
     // entra a la pelota justo en el impacto y sigue de largo hacia adelante.
     const apoyada = [...piernaEscorzo(p, 'R', { x: p.x + 0.12, y: 0.06 })];
-    const recogida = [-0.12, 2.5, 0.92, 0.42];
+    const recogida = c.panenka ? [-0.06, 1.45, 0.97, 0.72] : [-0.12, 2.5, 0.92, 0.42];   // Panenka: casi sin llevar la pierna atrás
     const contacto = [...piernaEscorzo(p, 'R', { x: PELOTA_EN_PLANO.x - 0.03, y: PELOTA_EN_PLANO.y - 0.07 })];
-    const larga = [...piernaEscorzo(p, 'R', { x: PELOTA_EN_PLANO.x - 0.04, y: 0.58 })];
+    const larga = [...piernaEscorzo(p, 'R', { x: PELOTA_EN_PLANO.x - 0.04, y: c.panenka ? 0.92 : 0.58 })];   // Panenka: la levanta por debajo
     const entre = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
     p.lR = g < 0.5 ? entre(apoyada, recogida, suave(g / 0.5)) : g <= 1 ? entre(recogida, contacto, ((g - 0.5) / 0.5) ** 2) : entre(contacto, larga, frenado(seg));
     p.aL = [-1.75 - 0.3 * Math.sin(PI * clamp(g, 0, 1)), 0.25]; p.aR = [2.5, -0.7];   // brazo contrario afuera, para el equilibrio

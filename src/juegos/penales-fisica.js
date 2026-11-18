@@ -42,6 +42,13 @@ export function velocidadHacia(obj, v0) {
   const a = (lo + hi) / 2, vh = v0 * Math.cos(a);
   return { x: vh * (obj.x / d), y: v0 * Math.sin(a), z: vh * (CANCHA.LINEA / d) };
 }
+// Remate con un ángulo de salida fijo (para el globo de un Panenka): rapidez justa para pasar por (x, y) en la línea.
+export function velocidadConAngulo(obj, ang) {
+  const r = CANCHA.RADIO_PELOTA, d = Math.hypot(obj.x, CANCHA.LINEA);
+  const v0 = Math.sqrt((G * d * d) / (2 * Math.cos(ang) ** 2 * (d * Math.tan(ang) - (obj.y - r))));
+  const vh = v0 * Math.cos(ang);
+  return { x: vh * (obj.x / d), y: v0 * Math.sin(ang), z: vh * (CANCHA.LINEA / d) };
+}
 export const rapidezDePotencia = (p) => 17 + 14 * p; // m/s: de unos 60 a 110 km/h
 
 export function crearPelota() {

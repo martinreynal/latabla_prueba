@@ -2,6 +2,7 @@
 // Este archivo solo ordena las pantallas. La lógica está en copa-logica.js y penales-logica.js,
 // la tanda jugable en penales-tanda.js y el cuadro en copa-cuadro.js.
 import { EQUIPOS_COPA, CATEGORIAS, equipoCopa } from '../data/copa-equipos.js';
+import { generarNomina, easterEggDorsal } from './dorsales.js';
 import { RONDAS, MONEDA, nuevaCopa, cerrarRonda, partidoDe, rivalDe, cargarCopa, guardarCopa, borrarCopa, elegirMoneda, aplicarDecision, falloEspecial } from './copa-logica.js';
 import { htmlCuadro, activarCuadro, trofeo } from './copa-cuadro.js';
 import { crearTanda } from './penales-tanda.js';
@@ -263,6 +264,8 @@ export function montarPenales(raiz) {
     const rival = equipoCopa(rivalDe(partidoDe(copa, copa.equipo).m, copa.equipo));
     const s = copa.partido.sorteo;          // las copas guardadas antes del sorteo de moneda no lo tienen
     if (s && !s.listo) return moneda(yo, rival);
+    // Copas guardadas antes de los dorsales: se arma la nómina ahora, una sola vez.
+    if (!copa.partido.nominas) copa.partido.nominas = { yo: generarNomina(yo.id), rival: generarNomina(rival.id) };
     copa.estado = 'jugando';
     guardar();
     const el = pantalla('<div id="copa-tanda"></div>');
@@ -270,6 +273,13 @@ export function montarPenales(raiz) {
       yo, rival, ronda: RONDAS[copa.ronda], esFinal: copa.ronda === RONDAS.length - 1, partido: copa.partido,
       tribuna: s?.crowdTeam, cursor: s?.horizontalCursorSpeedMultiplier,
       falloRival: s ? (n) => { const f = falloEspecial(s, n); guardar(); return f; } : null,
+      nominas: copa.partido.nominas,
+      // Easter egg del dorsal del pateador rival: se sortea una vez por ejecución y queda guardado.
+      eggRival(n, jugador) {
+        const eggs = (copa.partido.eggs ??= {});
+        if (!(n in eggs)) { eggs[n] = easterEggDorsal(jugador, 'rival'); guardar(); }
+        return eggs[n];
+      },
       // cada penal queda guardado: al recargar, la tanda sigue donde estaba
       alPatear() { if (s) s.penaltyNumberByTeam = { yo: copa.partido.mios.length, rival: copa.partido.suyos.length }; guardar(); },
       alTerminar() {

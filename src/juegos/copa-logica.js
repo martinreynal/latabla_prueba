@@ -1,6 +1,7 @@
 // Lógica de la Copa Argentina: sorteo, resultados de los 90', simulación de los demás partidos y avance.
 // Sin nada de pantalla. Todo lo que se sortea queda guardado en el estado para no repetirse al recargar.
 import { ganador } from './penales-logica.js';
+import { generarNomina } from './dorsales.js';
 
 export const RONDAS = ['32avos de final', '16avos de final', 'Octavos de final', 'Cuartos de final', 'Semifinales', 'Final'];
 export const VERSION = 1;
@@ -84,7 +85,11 @@ export function falloEspecial(s, n, rnd = Math.random) {
 
 export function prepararPartido(idYo, idRival, rnd = Math.random) {
   // primero queda sin definir hasta que se resuelve el sorteo de moneda
-  return { empate: empate90(idYo, idRival, rnd), primero: null, mios: [], suyos: [], sorteo: nuevoSorteo(rnd) };
+  return {
+    empate: empate90(idYo, idRival, rnd), primero: null, mios: [], suyos: [], sorteo: nuevoSorteo(rnd),
+    // Dorsales y orden de pateadores: una sola vez por partido; en el siguiente se arma una nómina nueva.
+    nominas: { yo: generarNomina(idYo, rnd), rival: generarNomina(idRival, rnd) },
+  };
 }
 
 /* ---------- Simulación de los partidos de los demás ---------- */

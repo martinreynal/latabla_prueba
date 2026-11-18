@@ -6,10 +6,11 @@
 // Las reglas viven en penales-logica.js, la física en penales-fisica.js, los cuerpos en penales-cuerpo.js
 // y el dibujo en penales-dibujo.js. Este archivo solo coordina: tiempos, turnos, entrada y marcador.
 import {
-  ganador, remateUsuario, generarRemateRival, generarRemateAlto, decidirArqueroIA, ARQUERO_IA,
+  ganador, remateUsuario, generarRemateRival, generarRemateAlto, generarPanenka, decidirArqueroIA, ARQUERO_IA,
   activaAprendizaje, elegibleEscurrida, sorteaEscurrida,
 } from './penales-logica.js';
-import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, crearPelota, patear, pasoPelota, definida, resultado, cruce, escaparse } from './penales-fisica.js';
+import { pateadorDe, easterEggDorsal } from './dorsales.js';
+import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, velocidadConAngulo, crearPelota, patear, pasoPelota, definida, resultado, cruce, escaparse } from './penales-fisica.js';
 import {
   REACCION, crearArquero, lanzarEstirada, afinarManos, momentoEstirada, duracionEstirada, poseArquero, arqueroDePie,
   articulaciones, partes, crearCarrera, poseEjecutante,
@@ -26,7 +27,9 @@ const ZONAS_X = [-2.44, 0, 2.44], ZONAS_Y = [0.45, 1.36, 2.27];
 
 // o: { yo, rival, ronda, esFinal, partido: { empate, primero, mios, suyos }, alPatear(), alTerminar(gano),
 //      tribuna: 'yo' | 'rival' (quién tiene la hinchada detrás del arco), cursor: multiplicador de velocidad del control
-//      de dirección, falloRival(n): ¿el penal n.º n del rival se va por arriba por la presión? }
+//      de dirección, falloRival(n): ¿el penal n.º n del rival se va por arriba por la presión?,
+//      nominas: { yo, rival } con dorsales y orden de pateadores (dorsales.js),
+//      eggRival(n, jugador): easter egg del dorsal del pateador rival en su penal n.º n (sorteado una vez y guardado) }
 export function crearTanda(cont, o) {
   const { yo, rival, partido } = o;
   const st = { fase: 'intro', t0: 0, mios: partido.mios, suyos: partido.suyos, animo: 'neutral', tAnimo: 0, fundido: -9 };
@@ -91,17 +94,25 @@ export function crearTanda(cont, o) {
   // Le toca patear al usuario si ya pateó menos, o si van iguales y él patea primero.
   const tocaAlUsuario = () => (partido.primero === 'yo' ? st.mios.length === st.suyos.length : st.mios.length < st.suyos.length);
 
+  // Quién patea: sale del orden de la nómina del equipo, según cuántos penales lleva.
+  const nominas = o.nominas;
+  function pateadorActual(pateaYo) {
+    if (!nominas) return null;
+    const eq = pateaYo ? 'yo' : 'rival';
+    return pateadorDe(nominas[eq], (pateaYo ? st.mios : st.suyos).length);
+  }
   function nuevoPenal() {
+    const pateaYo = tocaAlUsuario();
     pen = {
-      pateaYo: tocaAlUsuario(), carrera: crearCarrera(), arq: crearArquero(), pelota: crearPelota(),
+      pateaYo, pateador: pateadorActual(pateaYo), carrera: crearCarrera(), arq: crearArquero(), pelota: crearPelota(),
       tInicio: reloj, tCarrera: null, tImpacto: null, vel: null, cruce: null,
       eleccion: null, tEleccion: 0,      // a dónde eligió tirarse el usuario (cuando ataja)
       planIA: null,                      // decisión del arquero rival (cuando patea el usuario)
       amague: Math.random() * 6, res: null, tRes: 0, tRed: -9, jAnt: null,
     };
   }
-  function fijarRemate(obj, v0, tCarrera) {
-    pen.vel = velocidadHacia(obj, v0);
+  function fijarRemate(obj, v0, tCarrera, vel = null) {
+    pen.vel = vel ?? velocidadHacia(obj, v0);
     pen.cruce = cruce(pen.vel);                 // por dónde va a pasar: queda decidido antes del impacto
     pen.tCarrera = tCarrera;
     pen.tImpacto = tCarrera + pen.carrera.duracion;
@@ -113,15 +124,26 @@ export function crearTanda(cont, o) {
     pen.tInicio = reloj;
     if (pen.pateaYo) {
       Object.assign(ctl, { activo: true, paso: 0, valores: [null, null, null], faseInd: Math.random(), ms0: performance.now() });
-      ayuda('Pateás vos · 1 de 3: tocá para frenar la dirección');
+      ayuda(`Patea ${pen.pateador ? `el ${pen.pateador.dorsal}${pen.pateador.arquero ? ', tu arquero' : ''}` : 'vos'} · 1 de 3: tocá para frenar la dirección`);
       decir('Te toca patear.');
     } else {
       // El remate del rival y el momento en que arranca quedan sorteados acá. Nada de lo que haga el usuario los cambia.
-      const r = o.falloRival?.(st.suyos.length + 1) ? generarRemateAlto() : generarRemateRival();
-      fijarRemate(r.obj, r.v0, reloj + ESPERA_RIVAL[0] + Math.random() * (ESPERA_RIVAL[1] - ESPERA_RIVAL[0]));
+      // Primero, los easter eggs del dorsal (un solo sorteo por ejecución). Si no hay, sigue la lógica habitual,
+      // con la presión de la tribuna incluida.
+      const n = st.suyos.length + 1, jug = pen.pateador;
+      const egg = jug ? (o.eggRival ? o.eggRival(n, jug) : easterEggDorsal(jug, 'rival')) : null;
+      const espera = reloj + ESPERA_RIVAL[0] + Math.random() * (ESPERA_RIVAL[1] - ESPERA_RIVAL[0]);
+      if (egg === 'panenka') {
+        const r = generarPanenka();
+        pen.carrera = crearCarrera(Math.random, { panenka: true });
+        fijarRemate(r.obj, null, espera, velocidadConAngulo(r.obj, r.angulo));
+      } else {
+        const r = o.falloRival?.(n) ? generarRemateAlto() : generarRemateRival();
+        fijarRemate(r.obj, r.v0, espera);
+      }
       ctl.activo = false;
       ayuda('Atajás vos · tocá el lugar del arco donde te vas a tirar. El rival patea cuando quiere.');
-      decir('Te toca atajar. Elegí a dónde tirarte: el rival patea sin avisar.');
+      decir(`Te toca atajar${pen.pateador ? `. Patea el ${pen.pateador.dorsal} de ${rival.nombre}` : ''}. Elegí a dónde tirarte: el rival patea sin avisar.`);
     }
   }
   function siguiente() {
@@ -205,6 +227,7 @@ export function crearTanda(cont, o) {
     if (pen.res !== 'gol') b.afuera = true;      // la jugada ya está juzgada: no puede convertirse en gol después
     const gol = pen.res === 'gol', pateo = pen.pateaYo;
     (pateo ? st.mios : st.suyos).push(gol);     // se anota una sola vez por penal
+    if (nominas) nominas[pateo ? 'yo' : 'rival'].siguiente = (pateo ? st.mios : st.suyos).length % nominas.yo.orden.length;
     // El arquero rival aprende si atajó un remate al centro. Queda guardado solo para este partido.
     if (pateo && activaAprendizaje(pen.res, pen.cruce.x)) partido.arqueroAprendio = true;
     o.alPatear?.();
@@ -344,7 +367,7 @@ export function crearTanda(cont, o) {
     if (!detras && b.z > ZA) dibujarPelota(b);
     sombra(ja.cadera.x, ZA, 0.34 + 0.3 * Math.abs(Math.sin(poseArquero(pen.arq, reloj).th)), 0.22);
     const sa = escala(ZA);
-    cuerpoDibujo(ctx, ja, (q) => proyectar(q.x, q.y, ZA), sa, pen.pateaYo ? kitArqRival : kitArqYo, { guantes: true });
+    cuerpoDibujo(ctx, ja, (q) => proyectar(q.x, q.y, ZA), sa, pen.pateaYo ? kitArqRival : kitArqYo, { guantes: true, dorsal: nominas?.[pen.pateaYo ? 'rival' : 'yo'].arquero.dorsal });
     // Marca discreta del lugar elegido por el usuario (solo su propia elección, nunca la del rival)
     if (!pen.pateaYo && pen.eleccion && !pen.arq.plan) {
       const m = proyectar(pen.eleccion.x, pen.eleccion.y, ZA);
@@ -353,7 +376,9 @@ export function crearTanda(cont, o) {
     }
     if (b.z <= ZA && b.z >= ej.z) dibujarPelota(b);
     sombra(je.cadera.x, ej.z, 0.32, 0.22);
-    cuerpoDibujo(ctx, je, (q) => proyectar(q.x, q.y, ej.z), escala(ej.z), pen.pateaYo ? yo : rival, { espalda: true });
+    // Si patea el arquero, lo hace con su buzo y sus guantes; el arco lo sigue defendiendo el arquero del otro equipo.
+    const pj = pen.pateador, kitEj = pj?.arquero ? (pen.pateaYo ? kitArqYo : kitArqRival) : (pen.pateaYo ? yo : rival);
+    cuerpoDibujo(ctx, je, (q) => proyectar(q.x, q.y, ej.z), escala(ej.z), kitEj, { espalda: true, guantes: !!pj?.arquero, dorsal: pj?.dorsal });
     if (b.z < ej.z) dibujarPelota(b);
 
     if (pen.pateaYo && ['PREPARACION', 'CARRERA', 'IMPACTO', 'BALON_EN_MOVIMIENTO'].includes(st.fase)) {
@@ -400,7 +425,7 @@ export function crearTanda(cont, o) {
   raf = requestAnimationFrame(bucle);
 
   // Para las pruebas automáticas: estado de solo lectura.
-  cont.firstElementChild.__penal = () => ({ ctl: { ...ctl, valores: [...ctl.valores] }, modoIA: pen?.modoIA, nivel: pen?.nivel, escurre: !!pen?.escurre, aprendio: !!partido.arqueroAprendio, cursor, hinchada: hinchada.id, fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
+  cont.firstElementChild.__penal = () => ({ pateador: pen?.pateador, panenka: !!pen?.carrera?.panenka, ctl: { ...ctl, valores: [...ctl.valores] }, modoIA: pen?.modoIA, nivel: pen?.nivel, escurre: !!pen?.escurre, aprendio: !!partido.arqueroAprendio, cursor, hinchada: hinchada.id, fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
 
   return function destruir() {
     destruido = true;
