@@ -1,15 +1,23 @@
 // Dibujo del juego de penales: cancha, tribuna, jugadores, pelota y controles de remate.
 import { urlEscudo } from '../lib/escudos.js';
-import { ARCO, ARCO_CX } from './penales-logica.js';
+import { CANCHA, proyectar } from './penales-fisica.js';
 
-/* ---------- Geometría (unidades lógicas del canvas, 800 × 600) ---------- */
-export const W = 800, H = 600, ESC = 2;
-export const PISO_TRIBUNA = 190;            // donde termina la tribuna y empieza el pasto
-export const PELOTA0 = { x: 407, y: 433 };
-export const PATEADOR0 = { x: 300, y: 470, s: 1.25 };
-export const PATEADOR1 = { x: 393, y: 388, s: 1.1 };
-export const ARQUERO0 = { x: ARCO_CX, y: 226 };
-export const CONTROLES = [{ x: 232 }, { x: 421 }, { x: 601 }];
+/* ---------- Geometría (unidades lógicas del canvas, 960 × 540, formato 16:9) ---------- */
+export const W = 960, H = 540, ESC = 2;
+// La tribuna termina donde el piso, unos metros detrás del arco, se junta con el paredón.
+export const PISO_TRIBUNA = Math.round(proyectar(0, 0, CANCHA.LINEA + 6).y);
+const MURO = PISO_TRIBUNA - 38;             // arriba del paredón empieza el alambrado
+const BAJA = MURO - 152;                    // cuánto bajó el alambrado respecto del diseño original de 800 × 600
+const SX = W / 800;                         // ancho respecto del diseño original
+// Arco en pantalla, calculado con la misma proyección que la física: lo que se ve es lo que cuenta.
+const ARCO_P = (() => {
+  const { MEDIO_ARCO: MA, ALTO_ARCO: AA, LINEA } = CANCHA;
+  const a = proyectar(-MA, AA, LINEA), b = proyectar(MA, 0, LINEA);
+  return { x1: a.x, x2: b.x, y1: a.y, y2: b.y, s: a.s };
+})();
+export const ARCO_PANTALLA = ARCO_P;
+export const CONTROLES = [{ x: 300 }, { x: 480 }, { x: 660 }];
+const Y_CONTROLES = 500;
 export const PERIODO = [1500, 1250, 1050];  // ms que tarda cada indicador en ir y volver
 
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -211,7 +219,7 @@ export function crearTribuna(local) {
   const capas = [lienzo(), lienzo(), lienzo()];
   const [brazos, xb] = lienzo();
   xb.lineCap = 'round'; xb.lineWidth = 1.5;
-  for (let fila = 0; fila < 21; fila++) {
+  for (let fila = 0; fila < Math.ceil((MURO - 6) / 7) + 1; fila++) {
     const y = 6 + fila * 7, x = capas[fila % 3][1];
     for (let px = -4 + (fila % 2) * 3.5; px < W + 4; px += 7) {
       const jx = px + (r() - 0.5) * 2.4, jy = y + (r() - 0.5) * 2;
@@ -227,9 +235,11 @@ export function crearTribuna(local) {
       }
     }
   }
-  const TRAPOS = [[-10, 30, 150, 52, 22], [150, 118, 285, 30, 20], [640, 96, 810, 78, 26], [420, 44, 600, 40, 15]];
-  const BANDERAS = [[92, 86, 0.0], [222, 60, 1.7], [356, 96, 3.1], [540, 70, 4.4], [672, 52, 5.9], [748, 110, 2.4]];
-  const trepados = [[26, 122, -0.1], [64, 110, 0.1], [742, 106, -0.08], [776, 124, 0.08]];
+  const TRAPOS = [[-10, 30, 150, 52, 22], [150, 118, 285, 30, 20], [640, 96, 810, 78, 26], [420, 44, 600, 40, 15]]
+    .map(([x1, y1, x2, y2, a]) => [x1 * SX, y1 + BAJA * 0.6, x2 * SX, y2 + BAJA * 0.6, a]);
+  const BANDERAS = [[92, 86, 0.0], [222, 60, 1.7], [356, 96, 3.1], [540, 70, 4.4], [672, 52, 5.9], [748, 110, 2.4]]
+    .map(([x, y, f]) => [x * SX, y + BAJA * 0.6, f]);
+  const trepados = [[26, 122, -0.1], [64, 110, 0.1], [742, 106, -0.08], [776, 124, 0.08]].map(([x, y, r]) => [x * SX, y + BAJA, r]);
   const kitHincha = { ...local, pant: '#27313f', medias: '#27313f' };
 
   // t: segundos · animo y tAnimo: estado de la hinchada y cuánto hace que cambió
@@ -298,68 +308,81 @@ export function crearAlambrado() {
   // Malla
   x.strokeStyle = 'rgba(210,220,235,.2)'; x.lineWidth = 0.7;
   x.beginPath();
-  for (let i = -160; i < W + 160; i += 9) { x.moveTo(i, 58); x.lineTo(i + 96, 154); x.moveTo(i + 96, 58); x.lineTo(i, 154); }
+  const arriba = 58 + BAJA;
+  for (let i = -160; i < W + 160; i += 9) { x.moveTo(i, arriba); x.lineTo(i + 96, MURO + 2); x.moveTo(i + 96, arriba); x.lineTo(i, MURO + 2); }
   x.stroke();
   // Postes y caño superior
   x.fillStyle = '#9aa3ad';
-  [118, 300, 508, 700].forEach((px) => x.fillRect(px - 3, 6, 6, 150));
-  x.fillStyle = '#b4bcc6'; x.fillRect(0, 56, W, 3);
+  [118, 300, 508, 700].forEach((px) => x.fillRect(px * SX - 3, 6, 6, MURO - 2));
+  x.fillStyle = '#b4bcc6'; x.fillRect(0, arriba - 2, W, 3);
   // Paredón
-  const g = x.createLinearGradient(0, 152, 0, PISO_TRIBUNA);
+  const g = x.createLinearGradient(0, MURO, 0, PISO_TRIBUNA);
   g.addColorStop(0, '#8d8f8c'); g.addColorStop(1, '#6f716e');
-  x.fillStyle = g; x.fillRect(0, 152, W, PISO_TRIBUNA - 152);
+  x.fillStyle = g; x.fillRect(0, MURO, W, PISO_TRIBUNA - MURO);
   x.fillStyle = 'rgba(0,0,0,.18)';
-  for (let i = 0; i < W; i += 46) x.fillRect(i, 152, 1, PISO_TRIBUNA - 152);
+  for (let i = 0; i < W; i += 46) x.fillRect(i, MURO, 1, PISO_TRIBUNA - MURO);
   x.fillStyle = '#2d4a86'; x.fillRect(0, PISO_TRIBUNA - 4, W, 4);
   return c;
 }
 
+// Cancha dibujada en coordenadas reales (metros) y proyectada con la misma cámara que la pelota y los jugadores.
+const P = (x, z) => proyectar(x, 0, z);
 export function pasto(ctx) {
   const g = ctx.createLinearGradient(0, PISO_TRIBUNA, 0, H);
   g.addColorStop(0, '#3f9a25'); g.addColorStop(1, '#2f8a1c');
   ctx.fillStyle = g; ctx.fillRect(0, PISO_TRIBUNA, W, H - PISO_TRIBUNA);
-  // Damero del corte
-  const filas = [PISO_TRIBUNA, 262, 306, 356, 414, 482, 560, H];
-  for (let f = 0; f < filas.length - 1; f++) {
-    for (let col = 0; col < 8; col++) {
-      if ((f + col) % 2) continue;
-      ctx.fillStyle = 'rgba(255,255,255,.055)';
-      ctx.fillRect(col * 100, filas[f], 100, filas[f + 1] - filas[f]);
+  // Corte del pasto en damero: franjas de 2,75 m de profundidad y 5 m de ancho, en perspectiva
+  ctx.fillStyle = 'rgba(255,255,255,.055)';
+  for (let f = 0; f < 10; f++) {
+    const za = 17 - f * 2.75, zb = za - 2.75;
+    for (let c = -7; c < 7; c++) {
+      if ((f + c + 20) % 2) continue;
+      const a = P(c * 5, za), b = P((c + 1) * 5, za), d = P((c + 1) * 5, zb), e = P(c * 5, zb);
+      ctx.beginPath(); ctx.moveTo(a.x, Math.max(a.y, PISO_TRIBUNA)); ctx.lineTo(b.x, Math.max(b.y, PISO_TRIBUNA)); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.fill();
     }
   }
-  // Líneas
-  ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
-  ctx.beginPath(); ctx.moveTo(0, 264); ctx.lineTo(W, 264); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(42, 264); ctx.lineTo(20, 348); ctx.lineTo(780, 348); ctx.lineTo(758, 264); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0, 527); ctx.lineTo(W, 527); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(400, 527, 350, 62, 0, 0.02, Math.PI - 0.02); ctx.stroke();
+  // Líneas: de fondo, área chica (5,5 m), área grande (16,5 m) y punto del penal
+  const { LINEA: L, MEDIO_ARCO: MA } = CANCHA;
+  const linea = (pts) => { ctx.beginPath(); pts.forEach(([x, z], i) => { const q = P(x, z); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke(); };
+  ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineJoin = 'round'; ctx.lineWidth = 3;
+  linea([[-40, L], [40, L]]);
+  const ch = MA + 5.5, gr = MA + 16.5;
+  linea([[-ch, L], [-ch, L - 5.5], [ch, L - 5.5], [ch, L]]);
+  linea([[-gr, L], [-gr, L - 16.5], [gr, L - 16.5], [gr, L]]);
+  const pp = P(0, 0);
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.ellipse(pp.x, pp.y + 1, 0.12 * pp.s, 0.04 * pp.s, 0, 0, 7); ctx.fill();
 }
 
 export function arco(ctx, sacude) {
-  const { x1, x2, y1, y2 } = ARCO;
-  const fx1 = x1 + 10, fx2 = x2 - 10, fy = y1 - 22; // fondo de la red
-  // Red
+  const { x1, x2, y1, y2 } = ARCO_P;
+  // Fondo de la red: 1,6 m detrás de la línea, un poco más bajo que el travesaño
+  const { MEDIO_ARCO: MA, ALTO_ARCO: AA, LINEA, FONDO_RED } = CANCHA;
+  const fa = proyectar(-MA + 0.25, AA - 0.5, LINEA + FONDO_RED), fb = proyectar(MA - 0.25, 0, LINEA + FONDO_RED);
+  const fx1 = fa.x, fx2 = fb.x, fy = fa.y;
   ctx.save();
   ctx.fillStyle = 'rgba(20,30,40,.28)';
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(fx1, fy); ctx.lineTo(fx2, fy); ctx.lineTo(x2, y1); ctx.lineTo(x2, y2); ctx.lineTo(x1, y2); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.8;
   ctx.beginPath();
-  for (let i = 0; i <= 30; i++) {
-    const t = i / 30, k = Math.sin(t * Math.PI) * sacude;
+  const vert = Math.round((x2 - x1) / 11.5), hor = Math.round((y2 - y1) / 11.8);
+  for (let i = 0; i <= vert; i++) {
+    const t = i / vert, k = Math.sin(t * Math.PI) * sacude;
     ctx.moveTo(lerp(fx1, fx2, t), fy); ctx.lineTo(lerp(x1, x2, t), y1 + k * 0.4); ctx.lineTo(lerp(x1, x2, t) + k, y2);
   }
-  for (let j = 0; j <= 11; j++) { const y = lerp(y1, y2, j / 11); ctx.moveTo(x1, y); ctx.lineTo(x2, y); }
+  for (let j = 0; j <= hor; j++) { const y = lerp(y1, y2, j / hor); ctx.moveTo(x1, y); ctx.lineTo(x2, y); }
   for (let j = 1; j < 3; j++) { const t = j / 3; ctx.moveTo(lerp(x1, fx1, t), lerp(y1, fy, t)); ctx.lineTo(lerp(x2, fx2, t), lerp(y1, fy, t)); }
   ctx.stroke();
   // Tensores
+  const tx = 0.3 * ARCO_P.s;
   ctx.strokeStyle = '#8f979f'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x1 - 4, y1); ctx.lineTo(x1 - 18, fy - 4); ctx.lineTo(x1 - 18, y2 + 4); ctx.moveTo(x2 + 4, y1); ctx.lineTo(x2 + 18, fy - 4); ctx.lineTo(x2 + 18, y2 + 4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1 - 4, y1); ctx.lineTo(x1 - tx, fy - 4); ctx.lineTo(x1 - tx, y2 + 4); ctx.moveTo(x2 + 4, y1); ctx.lineTo(x2 + tx, fy - 4); ctx.lineTo(x2 + tx, y2 + 4); ctx.stroke();
   ctx.restore();
 }
 export function palos(ctx) {
-  const { x1, x2, y1, y2 } = ARCO;
-  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt';
-  ctx.beginPath(); ctx.moveTo(x1 - 3, y2 + 2); ctx.lineTo(x1 - 3, y1 - 3); ctx.lineTo(x2 + 3, y1 - 3); ctx.lineTo(x2 + 3, y2 + 2); ctx.stroke();
+  const { x1, x2, y1, y2 } = ARCO_P;
+  const g = CANCHA.RADIO_PALO * 2 * ARCO_P.s, m = g / 2;   // grosor real de los palos (12 cm) a esa distancia
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = g; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt';
+  ctx.beginPath(); ctx.moveTo(x1 - m, y2 + 2); ctx.lineTo(x1 - m, y1 - m); ctx.lineTo(x2 + m, y1 - m); ctx.lineTo(x2 + m, y2 + 2); ctx.stroke();
   ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(x1, y2); ctx.lineTo(x1, y1); ctx.lineTo(x2, y1); ctx.lineTo(x2, y2); ctx.stroke();
 }
@@ -398,7 +421,7 @@ export function controles(ctx, st, ahora, chico) {
     const activo = st.activo && st.paso === i;
     const hecho = st.valores[i] !== null;
     ctx.save();
-    ctx.translate(chico ? [150, 410, 655][i] : c.x, chico ? 546 : 566);
+    ctx.translate(chico ? [170, 480, 790][i] : c.x, chico ? 482 : Y_CONTROLES);
     const s = (activo ? 1.16 + Math.sin(ahora / 140) * 0.015 : 1) * (chico ? 1.45 : 1);
     ctx.scale(s, s);
     ctx.globalAlpha = activo || hecho ? 1 : 0.42;

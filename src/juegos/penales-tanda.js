@@ -16,9 +16,17 @@ import {
   articulaciones, partes, crearCarrera, poseEjecutante,
 } from './penales-cuerpo.js';
 import {
-  W, H, ESC, PISO_TRIBUNA, PERIODO, clamp, onda,
+  W, H, ESC, PISO_TRIBUNA, ARCO_PANTALLA, PERIODO, clamp, onda,
   kitArquero, escudoHtml, cuerpoDibujo, crearTribuna, crearAlambrado, pasto, arco, palos, pelotaDibujo, controles,
 } from './penales-dibujo.js';
+
+// Sigla de tres letras para el marcador, al estilo de las transmisiones: ALD, SMF, GCH…
+export function sigla(e) {
+  const pal = e.corto.normalize('NFD').replace(/[\u0300-\u036f.]/g, '').toUpperCase().split(/\s+/).filter((w) => w && !['DE', 'LA', 'Y'].includes(w));
+  if (pal.length === 1) return pal[0].slice(0, 3);
+  if (pal.length === 2) return pal[0][0] + pal[1].slice(0, 2);
+  return pal.slice(0, 3).map((w) => w[0]).join('');
+}
 
 const ESPERA_RIVAL = [2, 4];      // s: el rival arranca la carrera en algún momento de este rango, sin avisar
 const T_RESOLUCION = 1.35;        // s que se deja correr la jugada después de definirse
@@ -48,7 +56,7 @@ export function crearTanda(cont, o) {
     <div class="pen">
       <div class="pen__cancha">
         <canvas width="${W * ESC}" height="${H * ESC}" role="img" aria-label="Cancha de penales: arco, arquero y pateador"></canvas>
-        <div class="pen__tv" data-tv></div>
+        <div class="pen__marcador" data-tv role="img"></div>
         <p class="pen__msg" data-msg aria-hidden="true"></p>
         <div class="pen__capa" data-capa></div>
       </div>
@@ -61,18 +69,22 @@ export function crearTanda(cont, o) {
   const ctx = cv.getContext('2d');
   const goles = (l) => l.filter(Boolean).length;
 
+  // Marcador compacto de transmisión, arriba a la izquierda: dos filas (una por equipo) con escudo, sigla,
+  // resultado de los 90', goles en la tanda y la serie de penales.
   function marcador() {
     const largo = Math.max(st.mios.length, st.suyos.length);
     const total = Math.max(5, largo, st.fase === 'fin' ? 0 : Math.min(st.mios.length, st.suyos.length) + 1);
     const casillas = (l) => Array.from({ length: total }, (_, i) => `<i class="${l[i] === true ? 'g' : l[i] === false ? 'e' : ''}"></i>`).join('');
-    $('tv').innerHTML = `
-      <div class="pen__tv-eq">${escudoHtml(yo)}<span class="pen__tv-nombre">${yo.corto}</span></div>
-      <div class="pen__tv-res" aria-label="Resultado de los 90 minutos"><b>${partido.empate}</b><span>-</span><b>${partido.empate}</b></div>
-      <div class="pen__tv-eq pen__tv-eq--der"><span class="pen__tv-nombre">${rival.corto}</span>${escudoHtml(rival)}</div>
-      <div class="pen__tv-fin">Finalizado · 90'</div>
-      <div class="pen__tv-serie" aria-hidden="true">${casillas(st.mios)}</div>
-      <div class="pen__tv-pen"><small>${total > 5 ? 'Muerte súbita' : 'Penales'}</small><span><b>${goles(st.mios)}</b>-<b>${goles(st.suyos)}</b></span></div>
-      <div class="pen__tv-serie pen__tv-serie--der" aria-hidden="true">${casillas(st.suyos)}</div>`;
+    const estado = st.fase === 'fin' ? 'Final' : total > 5 ? 'Muerte súbita' : 'Penales';
+    const patea = st.fase === 'fin' || !pen ? null : pen.pateaYo ? 'yo' : 'rival';
+    const fila = (e, l, quien) => `
+      <div class="pm__fila ${patea === quien ? 'pm__fila--patea' : ''}">${escudoHtml(e, 'pm__escudo')}<span class="pm__sigla">${sigla(e)}</span>
+        <b class="pm__90">${partido.empate}</b><b class="pm__pen">${goles(l)}</b><span class="pm__serie">${casillas(l)}</span></div>`;
+    const tv = $('tv');
+    tv.setAttribute('aria-label', `${o.ronda}. ${yo.nombre} ${partido.empate}, ${rival.nombre} ${partido.empate} en los 90 minutos. ${estado}: ${goles(st.mios)} a ${goles(st.suyos)}.`);
+    tv.innerHTML = `
+      <div class="pm__cab" aria-hidden="true"><span class="pm__inst">${o.ronda}</span><span class="pm__col">90'</span><span class="pm__col">Pen</span><span class="pm__estado">${estado}</span></div>
+      ${fila(yo, st.mios, 'yo')}${fila(rival, st.suyos, 'rival')}`;
   }
   const ayuda = (t) => { $('ayuda').textContent = t; };
   const decir = (t) => { $('vivo').textContent = t; };
@@ -121,6 +133,7 @@ export function crearTanda(cont, o) {
     st.animo = 'neutral';
     mensaje('');
     fase('PREPARACION');
+    marcador();
     pen.tInicio = reloj;
     if (pen.pateaYo) {
       Object.assign(ctl, { activo: true, paso: 0, valores: [null, null, null], faseInd: Math.random(), ms0: performance.now() });
@@ -405,7 +418,7 @@ export function crearTanda(cont, o) {
     if (pen?.pateaYo) return frenar();
     const r = cv.getBoundingClientRect();
     const px = ((ev.clientX - r.left) / r.width) * W, py = ((ev.clientY - r.top) / r.height) * H;
-    if (py > 330) return; // lejos del arco: no cuenta
+    if (py > ARCO_PANTALLA.y2 + 45) return; // lejos del arco: no cuenta
     elegir(pantallaAArco(px, py, CANCHA.Z_ARQUERO));
   });
   const TECLAS = { q: [0, 2], w: [1, 2], e: [2, 2], a: [0, 1], s: [1, 1], d: [2, 1], z: [0, 0], x: [1, 0], c: [2, 0] };

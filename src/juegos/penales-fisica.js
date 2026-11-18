@@ -17,9 +17,11 @@ const REST = { piso: 0.52, palo: 0.6, red: 0.06 };
 // Restitución de cada parte del cuerpo: una palma amortigua, un pie o un antebrazo rebotan más.
 const REST_CUERPO = { mano: 0.3, antebrazo: 0.5, brazo: 0.45, torso: 0.22, cabeza: 0.55, muslo: 0.4, pierna: 0.55, pie: 0.62 };
 
-/* ---------- Proyección cancha → pantalla (canvas lógico de 800 × 600) ---------- */
-// Cámara en perspectiva detrás del pateador: la escala cae con la profundidad y el piso sube en pantalla.
-const ESC0 = 77, PROF = 17.9, HORIZONTE = -29.4, ALTURA_CAM = 6.11, CX = 407.5;
+/* ---------- Proyección cancha → pantalla (canvas lógico de 960 × 540) ---------- */
+// Cámara de transmisión detrás del pateador, con teleobjetivo: el arco se ve grande y cercano y la escala
+// cae poco con la profundidad. Canvas lógico de 960 × 540. Con estos valores el arco ocupa de x 209 a 751
+// y de y 88 a 289, el punto del penal queda en y 445 y la línea del área grande todavía entra abajo (y 533).
+const ESC0 = 80, PROF = 135.67, HORIZONTE = -1631, ALTURA_CAM = 25.95, CX = 480;
 export const escala = (z) => ESC0 / (1 + z / PROF);          // píxeles por metro a profundidad z
 export function proyectar(x, y, z) {
   const s = escala(z);
