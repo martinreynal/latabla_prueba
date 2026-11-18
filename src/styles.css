@@ -1384,7 +1384,7 @@ a.tile:active { transform: translateY(0); }
 /* Cuadro */
 .cz__visor { overflow: auto; max-height: min(70vh, 640px); border: 1px solid var(--borde); border-radius: var(--radio); background: var(--gris-2); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .cz__visor:focus-visible { outline: 2px solid var(--amarillo); outline-offset: 2px; }
-.cz__lienzo { position: relative; }
+.cz__lienzo { position: relative; margin: 0 auto; }   /* si entra entero, queda centrado */
 .cz__plano { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .cz__lineas { position: absolute; inset: 0; }
 .cz__linea { fill: none; stroke: #4a4a50; stroke-width: 1.5; }

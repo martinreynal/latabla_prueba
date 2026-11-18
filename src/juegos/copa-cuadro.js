@@ -111,21 +111,25 @@ export function activarCuadro(visor, copa, alDetalle, alZoom = () => {}) {
     visor.scrollTop = y * zoom - visor.clientHeight / 2;
   }
   function centrar(volverA100 = false) {
-    if (volverA100 && zoom < 0.9 && visor.clientWidth >= 700) { zoom = 1; aplicar(); }
+    if (volverA100 && zoom < 0.9 && visor.clientWidth >= 700) { zoom = 1; ajustado = false; aplicar(); }
     const r = copa.estado === 'eliminado' ? copa.eliminadoEn : Math.min(copa.ronda, 5);
     const p = posicion(r, partidoDe(copa, copa.equipo, 0).i >> r);
     irA(p.x + CW / 2, p.y + MH / 2);
   }
   // Cambia el zoom manteniendo fijo el punto (px, py) del visor, en coordenadas de pantalla.
   function cambiar(nuevo, px = visor.clientWidth / 2, py = visor.clientHeight / 2) {
+    ajustado = false;
     const cx = (visor.scrollLeft + px) / zoom, cy = (visor.scrollTop + py) / zoom;
     zoom = Math.max(MIN, Math.min(MAX, nuevo));
     aplicar();
     visor.scrollLeft = cx * zoom - px;
     visor.scrollTop = cy * zoom - py;
   }
+  // Cuadro completo a la vista: las dos mitades y la final, ajustado al tamaño del visor.
+  let ajustado = false;
   function todo() {
-    zoom = Math.max(MIN, Math.min(visor.clientWidth / ANCHO, visor.clientHeight / ALTO));
+    ajustado = true;
+    zoom = Math.max(MIN, Math.min((visor.clientWidth - 2) / ANCHO, (visor.clientHeight - 2) / ALTO));
     aplicar();
     visor.scrollLeft = 0; visor.scrollTop = 0;
   }
@@ -181,6 +185,11 @@ export function activarCuadro(visor, copa, alDetalle, alZoom = () => {}) {
     alDetalle(detalleCruce(copa, r, i));
   });
   aplicar();
-  centrar();
+  // En escritorio arranca mostrando el cuadro entero; en pantallas angostas, centrado en el partido propio.
+  if (visor.clientWidth >= 700) {
+    todo();
+    // Si cambia el tamaño de la ventana y nadie tocó el zoom, se vuelve a ajustar.
+    if (window.ResizeObserver) new ResizeObserver(() => { if (ajustado && visor.isConnected) todo(); }).observe(visor);
+  } else centrar();
   return { mas: () => cambiar(zoom * 1.2), menos: () => cambiar(zoom / 1.2), todo, centrar: () => centrar(true) };
 }
