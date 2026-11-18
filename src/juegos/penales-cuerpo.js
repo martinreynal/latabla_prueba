@@ -167,7 +167,10 @@ function planEstirada(desde, obj, variante) {
   } else if (obj.y < 1.75) {
     // Media altura cerca del cuerpo: paso corto y las dos manos a la pelota
     tipo = 'corta';
-    ext = apoyar(pose({ x: desde.x + dx * 0.55, th: lado * 0.16 * Math.min(1, Math.abs(dx)), lL: [0.3, -0.3, 0.95, 1], lR: [-0.3, 0.3, 0.95, 1] }));
+    // Si la pelota viene entre la rodilla y la cintura, se agacha para llegar con las manos.
+    const agacha = clamp((1.05 - obj.y) / 0.45, 0, 1);
+    const pierna = (sg) => [sg * lerp(0.3, 0.5, agacha), -sg * lerp(0.3, 0.5, agacha), lerp(0.95, 0.55, agacha), lerp(1, 0.9, agacha)];
+    ext = apoyar(pose({ x: desde.x + dx * lerp(0.55, 0.75, agacha), th: lado * 0.16 * Math.min(1, Math.abs(dx)), lL: pierna(1), lR: pierna(-1) }));
     brazoHacia(ext, 'L', { x: obj.x - 0.09, y: obj.y }); brazoHacia(ext, 'R', { x: obj.x + 0.09, y: obj.y });
     impulso = mezclar(desde, desenrollar(desde, ext), 0.3);
   } else {

@@ -220,8 +220,8 @@ export function montarPenales(raiz) {
         if (s.decision) return resumen();
         const el = poner(`<h2 class="moneda__tit moneda__tit--bien">¡Ganaste el sorteo!</h2>${discoFijo()}${salio}
           <div class="moneda__opciones">
-            <button type="button" class="moneda__opcion" data-dec="patear"><strong>Patear primero</strong><span>Arrancás vos la tanda.</span><small>A cambio, la tribuna de atrás del arco es de ${rival.corto}: tu control de dirección va un 30 % más rápido.</small></button>
-            <button type="button" class="moneda__opcion" data-dec="lado"><strong>Elegir el lado</strong><span>Tu hinchada detrás del arco.</span><small>A cambio, patea primero ${rival.corto}. Con tu gente atrás, el rival puede tirarla por arriba desde su quinto penal.</small></button>
+            <button type="button" class="moneda__opcion" data-dec="patear"><strong>Patear primero</strong></button>
+            <button type="button" class="moneda__opcion" data-dec="lado"><strong>Elegir el lado</strong></button>
           </div>`);
         el.querySelectorAll('[data-dec]').forEach((b) => b.addEventListener('click', () => { aplicarDecision(s, 'yo', b.dataset.dec); guardar(); resumen(); }));
         el.querySelector('[data-dec]').focus({ preventScroll: true });

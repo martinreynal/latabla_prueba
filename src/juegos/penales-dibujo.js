@@ -400,7 +400,8 @@ export function controles(ctx, st, ahora, chico) {
     } else {
       const R = 58, a0 = -Math.PI / 2 - 0.44, a1 = -Math.PI / 2 + 0.44;
       const g = ctx.createRadialGradient(0, 28, 4, 0, 28, R);
-      g.addColorStop(0, '#2fb23a'); g.addColorStop(0.38, '#8ccf2c'); g.addColorStop(0.6, '#f2d21b'); g.addColorStop(0.8, '#f08a1c'); g.addColorStop(1, '#d92a1c');
+      // Colores según el nivel de potencia (ver CONFIG_PENALES.potencia): la zona fuerte y la extrema ocupan más lugar.
+      g.addColorStop(0, '#2fb23a'); g.addColorStop(0.26, '#8ccf2c'); g.addColorStop(0.47, '#f2d21b'); g.addColorStop(0.62, '#f08a1c'); g.addColorStop(0.7, '#d92a1c'); g.addColorStop(1, '#b51d12');
       ctx.fillStyle = g; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(0, 28); ctx.arc(0, 28, R, a0, a1); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.shadowBlur = 0;

@@ -93,7 +93,7 @@ export function pasoPelota(b, partes) {
   if (b.y <= r + 0.002 && b.vy === 0) { const f = Math.max(0, 1 - 0.9 * DT); b.vx *= f; b.vz *= f; }
 
   // Cuerpo del arquero: solo mientras la pelota atraviesa su plano
-  if (partes && Math.abs(b.z - Z_ARQUERO) < r + 0.2) {
+  if (partes && !b.sinCuerpo && Math.abs(b.z - Z_ARQUERO) < r + 0.2) {
     for (const p of partes) {
       const clave = p.tipo + (p.lado ?? '');
       if (b.t - (b.enfriado[clave] ?? -1) < 0.12) continue;
@@ -101,11 +101,21 @@ export function pasoPelota(b, partes) {
       const dx = b.x - c.x, dy = b.y - c.y, d = Math.hypot(dx, dy), lim = r + p.r;
       if (d >= lim) continue;
       // La normal mira hacia el pateador; un roce (d cerca del límite) desvía más de costado y frena menos.
-      const k = 0.12 + 1.25 * (d / lim) ** 2, ux = d > 1e-6 ? dx / d : 0, uy = d > 1e-6 ? dy / d : 0;
+      // Primer contacto: se avisa (para el error excepcional del arquero). Si la pelota queda retenida, se corta acá.
+      if (b.alContacto && !b.contactoVisto) {
+        b.contactoVisto = true;
+        if (b.alContacto(p, b) === 'escurre') {
+          b.atrapada = b.retenida = true; b.vx = b.vy = b.vz = 0; b.toques.push(p.tipo); b.eventos.push(`cuerpo:${p.tipo}`);
+          return;
+        }
+      }
+      // Bloqueo asegurado: la toma de frente, sin roces que la desvíen hacia el arco.
+      const k = b.asegurar ? 0.1 : 0.12 + 1.25 * (d / lim) ** 2, ux = d > 1e-6 ? dx / d : 0, uy = d > 1e-6 ? dy / d : 0;
       let nx = ux * k, ny = uy * k, nz = -1;
       const n = Math.hypot(nx, ny, nz); nx /= n; ny /= n; nz /= n;
       const rap = Math.hypot(b.vx, b.vy, b.vz);
       // Embolsada: mano con la otra mano cerca y un remate que no viene demasiado fuerte.
+      if (p.tipo === 'mano' && b.asegurar) { b.atrapada = true; b.vx = b.vy = b.vz = 0; b.toques.push('mano'); b.eventos.push('cuerpo:manos'); return; }
       if (p.tipo === 'mano' && p.otraMano && Math.hypot(b.x - p.otraMano.x, b.y - p.otraMano.y) < 0.34 && rap < 19 && d < lim * 0.8) {
         b.atrapada = true; b.vx = b.vy = b.vz = 0; b.toques.push('mano'); b.eventos.push('cuerpo:manos');
         return;
@@ -114,6 +124,7 @@ export function pasoPelota(b, partes) {
       b.vx -= p.vx; b.vy -= p.vy;
       let e = REST_CUERPO[p.tipo] ?? 0.4;
       if (p.tipo === 'torso' && rap < 15) e = 0.1; // la bloquea con el cuerpo y queda cerca
+      if (b.asegurar) e = Math.max(e, 0.3);
       const pego = rebotar(b, nx, ny, nz, e);
       b.vx += p.vx; b.vy += p.vy;
       if (pego) { b.enfriado[clave] = b.t; b.toques.push(p.tipo); b.eventos.push(`cuerpo:${p.tipo}`); }
@@ -156,6 +167,7 @@ export function pasoPelota(b, partes) {
 
 // ¿Ya no puede cambiar el resultado? (para cerrar el penal sin esperar de más)
 export function definida(b) {
+  if (b.retenida) return false;              // la tiene en las manos, pero todavía se le puede escapar
   if (b.gol || b.atrapada) return true;
   if (b.afuera && b.z > CANCHA.LINEA + 1.2) return true;
   const rap = Math.hypot(b.vx, b.vy, b.vz);
@@ -168,6 +180,12 @@ export function resultado(b) {
   if (b.gol) return 'gol';
   if (b.toques.length) return 'atajada';
   return b.palo ? 'palo' : 'afuera';
+}
+
+// La pelota que el arquero tenía se le escapa hacia atrás, por debajo del cuerpo, y sigue rodando hacia el arco.
+export function escaparse(b) {
+  Object.assign(b, { atrapada: false, retenida: false, sinCuerpo: true, y: Math.max(CANCHA.RADIO_PELOTA, Math.min(b.y, 0.3)) });
+  b.vx = Math.sign(b.x) * 0.9; b.vy = 0.6; b.vz = 3.0;   // sale por la punta de los guantes, hacia el fondo del arco
 }
 
 // Por dónde y cuándo va a pasar un remate a la altura del arquero, si nadie lo toca.

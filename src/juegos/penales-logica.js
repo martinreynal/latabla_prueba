@@ -88,12 +88,42 @@ export const duracionVuelo = (p) => 820 - 470 * p;
 const MA = 3.66, AA = 2.72;
 const entre = (rnd, a, b) => a + rnd() * (b - a);
 
-// Remate del usuario a partir de los tres controles. Más potencia = más rápido, más desvío y más arriba.
-export function remateUsuario(h, v, p, rnd = Math.random) {
-  const sigma = 0.04 + 0.95 * p ** 3;
+// Parámetros configurables del arquero rival, de la potencia y de los eventos especiales.
+export const CONFIG_PENALES = {
+  goalkeeperCenterProbability: 0.06,     // se queda en el centro (sin estirada lateral)
+  goalkeeperLeftProbability: 0.47,
+  goalkeeperRightProbability: 0.47,
+  centerSaveLearningProbability: 0.94,   // ataja un remate central después de haber atajado uno
+  goalkeeperFumbleProbability: 0.0009,   // se le escapa un remate rasante y fuerte que ya tenía
+  zonaCentral: 0.33,                     // fracción del ancho del arco que cuenta como "centro"
+  // Potencia: el medidor (0 a 1) se convierte en potencia con una curva que agranda la zona fuerte.
+  potencia: { curva: 0.7, vMin: 15, vMax: 40, baja: 0.3, media: 0.6, alta: 0.85 },
+  // Cuánto se levanta la pelota con mucha potencia: empieza en "subeDesde" y crece con la altura elegida.
+  elevacion: { subeDesde: 0.5, base: 0.6, porAltura: 2.6, azar: [0.15, 1.15], desvioV: 0.3 },
+  rasante: 0.35,                         // m: altura máxima, al pasar por el arquero, de un remate rasante
+};
+const C = CONFIG_PENALES;
+export const MEDIO_CENTRAL = MA * C.zonaCentral;   // ±1,21 m: el 33 % central del ancho del arco
+export const esCentral = (x) => Math.abs(x) < MEDIO_CENTRAL;
+
+// Medidor (0 a 1) → potencia (0 a 1) y su nivel.
+export const potenciaDe = (medidor) => Math.max(0, Math.min(1, medidor)) ** C.potencia.curva;
+export function nivelPotencia(p) {
+  const P = C.potencia;
+  return p < P.baja ? 'baja' : p < P.media ? 'media' : p < P.alta ? 'alta' : 'extrema';
+}
+
+// Remate del usuario a partir de los tres controles: h ∈ [-1, 1], v ∈ [0, 1] y el medidor de potencia ∈ [0, 1].
+// Más potencia = más velocidad y más desvío. Desde potencia alta la pelota tiende a subir, y sube más
+// cuanto más alto se apuntó: un remate extremo a media altura o arriba puede irse por encima del travesaño.
+export function remateUsuario(h, v, medidor, rnd = Math.random) {
+  const p = potenciaDe(medidor), E = C.elevacion;
+  const sigma = 0.04 + 0.7 * p ** 3;
+  const fuerza = Math.max(0, (p - E.subeDesde) / (1 - E.subeDesde)) ** 2;          // 0 hasta potencia media, 1 al máximo
+  const sube = fuerza * (E.base + E.porAltura * v) * entre(rnd, ...E.azar) + Math.abs(gauss(rnd)) * fuerza * E.desvioV;
   const x = h * MARGEN_H * MA + gauss(rnd) * sigma;
-  const y = v * MARGEN_V * AA + gauss(rnd) * sigma * 0.7 + 0.45 * p ** 3;
-  return { obj: { x, y: Math.max(0.13, y) }, v0: 17 + 14 * p };
+  const y = v * MARGEN_V * AA + gauss(rnd) * sigma * 0.6 + sube;
+  return { obj: { x, y: Math.max(0.13, y) }, v0: C.potencia.vMin + (C.potencia.vMax - C.potencia.vMin) * p, p, nivel: nivelPotencia(p) };
 }
 
 // Tipos de remate del rival. peso = probabilidad relativa; todo lo demás son rangos [mínimo, máximo].
@@ -121,25 +151,43 @@ export function generarRemateAlto(rnd = Math.random) {
   return { tipo: 'alto', obj: { x: (rnd() * 2 - 1) * 2.8, y: entre(rnd, 3.3, 4.4) }, v0: entre(rnd, 27, 31) };
 }
 
-// Arquero rival. cruce = { x, y, t }: por dónde y cuándo va a pasar la pelota a su altura.
-// A veces se la juega antes del remate (adivina) y a veces espera y reacciona, con menos tiempo para llegar.
-// Devuelve { obj, demora }: a dónde se tira y cuántos segundos después del impacto arranca (negativo = antes).
-// obj null = se queda parado.
-export const ARQUERO_IA = { adivina: 0.55, aciertaLado: 0.62, seQueda: 0.08, reaccion: [0.03, 0.13], error: 0.22, radio: 0.85 };
-export function decidirArqueroIA(cruce, rnd = Math.random, cfg = ARQUERO_IA) {
-  if (rnd() < cfg.adivina) {
-    if (rnd() < cfg.seQueda) return { obj: null, demora: 0, modo: 'parado' };
-    const ladoReal = Math.sign(cruce.x) || (rnd() < 0.5 ? -1 : 1);
-    const lado = rnd() < cfg.aciertaLado ? ladoReal : -ladoReal;
-    const h = rnd();
-    const y = h < 0.45 ? entre(rnd, 0.25, 0.6) : h < 0.85 ? entre(rnd, 0.9, 1.5) : entre(rnd, 1.9, 2.4);
-    return { obj: { x: lado * entre(rnd, 2.0, 3.1), y }, demora: -entre(rnd, 0.2, 0.3), modo: 'adivina' };
+/* ---------- Arquero rival ---------- */
+// cruce = { x, y, t }: por dónde y cuándo va a pasar la pelota a la altura del arquero.
+// Devuelve { obj, demora, modo, seguro }: a dónde se tira y cuántos segundos después del impacto arranca
+// (negativo = se anticipa). obj null = se queda parado sin moverse. seguro = bloqueo asegurado por el aprendizaje.
+export const ARQUERO_IA = { reaccionCentro: [0.05, 0.12], errorCentro: 0.12, radio: 0.85, alcanceCentro: 1.0 };
+export function decidirArqueroIA(cruce, { aprendio = false } = {}, rnd = Math.random) {
+  // 1. Aprendizaje: si ya atajó un remate al centro, a los remates centrales les tiene la medida.
+  //    Un solo sorteo; si no sale (6 %), el penal sigue con la decisión habitual de abajo.
+  if (aprendio && esCentral(cruce.x) && cruce.y < AA && rnd() < C.centerSaveLearningProbability) {
+    return { obj: { x: cruce.x, y: cruce.y }, demora: -1, modo: 'aprendido', seguro: true };
   }
-  return {
-    obj: { x: cruce.x + gauss(rnd) * cfg.error, y: Math.max(0.15, cruce.y + gauss(rnd) * cfg.error * 0.7) },
-    demora: entre(rnd, ...cfg.reaccion), modo: 'reacciona',
-  };
+  // 2. Decisión habitual: 6 % se queda en el centro, 47 % se tira a la izquierda y 47 % a la derecha.
+  const r = rnd();
+  if (r < C.goalkeeperCenterProbability) {
+    // En el centro no se estira hacia un costado, pero si la pelota le pasa cerca, pone el cuerpo, las manos o las piernas.
+    if (Math.abs(cruce.x) > ARQUERO_IA.alcanceCentro + 0.2) return { obj: null, demora: 0, modo: 'centro' };
+    const A = ARQUERO_IA.alcanceCentro;
+    return {
+      obj: { x: Math.max(-A, Math.min(A, cruce.x + gauss(rnd) * ARQUERO_IA.errorCentro)), y: Math.max(0.15, cruce.y + gauss(rnd) * ARQUERO_IA.errorCentro) },
+      demora: entre(rnd, ...ARQUERO_IA.reaccionCentro), modo: 'centro',
+    };
+  }
+  const lado = r < C.goalkeeperCenterProbability + C.goalkeeperLeftProbability ? -1 : 1;
+  const h = rnd();
+  const y = h < 0.42 ? entre(rnd, 0.2, 0.6) : h < 0.82 ? entre(rnd, 0.8, 1.6) : entre(rnd, 1.8, 2.4);
+  return { obj: { x: lado * entre(rnd, 1.6, 3.1), y }, demora: -1, modo: lado < 0 ? 'izquierda' : 'derecha' };
 }
+
+// Activación del aprendizaje: solo una atajada efectiva de un remate que iba al centro.
+export const activaAprendizaje = (res, cruceX) => res === 'atajada' && esCentral(cruceX);
+
+// Error excepcional del arquero: solo remates rasantes de potencia alta o extrema que el arquero toca
+// con la pelota todavía entre los palos. Se sortea una sola vez por remate, en el primer contacto.
+export function elegibleEscurrida(nivel, contacto) {
+  return (nivel === 'alta' || nivel === 'extrema') && contacto.y <= C.rasante && Math.abs(contacto.x) < MA - 0.35;
+}
+export const sorteaEscurrida = (rnd = Math.random) => rnd() < C.goalkeeperFumbleProbability;
 
 // ¿Terminó la tanda? mios y suyos son listas de true (gol) / false. Devuelve 'yo', 'rival' o null.
 export function ganador(mios, suyos) {

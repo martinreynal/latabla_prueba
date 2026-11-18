@@ -5,10 +5,13 @@
 //   PREPARACION → CARRERA → IMPACTO → BALON_EN_MOVIMIENTO → RESOLUCION → RECUPERACION → SIGUIENTE_PENAL
 // Las reglas viven en penales-logica.js, la física en penales-fisica.js, los cuerpos en penales-cuerpo.js
 // y el dibujo en penales-dibujo.js. Este archivo solo coordina: tiempos, turnos, entrada y marcador.
-import { ganador, remateUsuario, generarRemateRival, generarRemateAlto, decidirArqueroIA, ARQUERO_IA } from './penales-logica.js';
-import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, crearPelota, patear, pasoPelota, definida, resultado, cruce } from './penales-fisica.js';
 import {
-  REACCION, crearArquero, lanzarEstirada, afinarManos, momentoEstirada, poseArquero, arqueroDePie,
+  ganador, remateUsuario, generarRemateRival, generarRemateAlto, decidirArqueroIA, ARQUERO_IA,
+  activaAprendizaje, elegibleEscurrida, sorteaEscurrida,
+} from './penales-logica.js';
+import { CANCHA, DT, escala, proyectar, pantallaAArco, velocidadHacia, crearPelota, patear, pasoPelota, definida, resultado, cruce, escaparse } from './penales-fisica.js';
+import {
+  REACCION, crearArquero, lanzarEstirada, afinarManos, momentoEstirada, duracionEstirada, poseArquero, arqueroDePie,
   articulaciones, partes, crearCarrera, poseEjecutante,
 } from './penales-cuerpo.js';
 import {
@@ -143,9 +146,20 @@ export function crearTanda(cont, o) {
     ctl.activo = false;
     const r = remateUsuario(ctl.valores[0] * 2 - 1, ctl.valores[1], ctl.valores[2]);
     fijarRemate(r.obj, r.v0, reloj);
-    // El arquero rival decide ahora: o se la juega antes del remate o espera y reacciona.
-    const d = decidirArqueroIA(pen.cruce);
-    if (d.obj) pen.planIA = { obj: d.obj, tLanz: pen.tImpacto + (d.demora < 0 ? momentoEstirada(d.obj, pen.cruce.t) : d.demora) };
+    pen.nivel = r.nivel;
+    // El arquero rival decide ahora, una sola vez: centro, izquierda o derecha (o el bloqueo aprendido).
+    const d = decidirArqueroIA(pen.cruce, { aprendio: !!partido.arqueroAprendio });
+    pen.modoIA = d.modo;
+    // Con el bloqueo aprendido lee la pelota y sale justo para llegar con ella, aunque sea después del remate.
+    const tSalida = d.seguro ? pen.cruce.t - duracionEstirada(d.obj) - 0.02 : d.demora < 0 ? momentoEstirada(d.obj, pen.cruce.t) : d.demora;
+    if (d.obj) pen.planIA = { obj: d.obj, tLanz: pen.tImpacto + tSalida };
+    const b = pen.pelota;
+    b.asegurar = !!d.seguro;
+    // Error excepcional: se sortea una sola vez, en el primer contacto, y solo si el remate es elegible.
+    b.alContacto = (parte, bola) => {
+      if (d.seguro || !elegibleEscurrida(pen.nivel, bola)) return null;
+      return sorteaEscurrida() ? (pen.escurre = { t: reloj }, 'escurre') : null;
+    };
     ayuda('');
     fase('CARRERA');
   }
@@ -164,7 +178,7 @@ export function crearTanda(cont, o) {
     const a = pen.arq;
     if (a.plan) {
       // Ya en el aire: con la pelota viajando, acomoda las manos hasta donde le da el brazo.
-      if (pen.pelota.enJuego) afinarManos(a, pen.cruce, reloj, pen.pateaYo ? ARQUERO_IA.radio : undefined);
+      if (pen.pelota.enJuego) afinarManos(a, pen.cruce, reloj, pen.pateaYo ? (pen.pelota.asegurar ? 2 : ARQUERO_IA.radio) : undefined);
       return;
     }
     if (pen.res || !pen.tImpacto) {
@@ -191,6 +205,8 @@ export function crearTanda(cont, o) {
     if (pen.res !== 'gol') b.afuera = true;      // la jugada ya está juzgada: no puede convertirse en gol después
     const gol = pen.res === 'gol', pateo = pen.pateaYo;
     (pateo ? st.mios : st.suyos).push(gol);     // se anota una sola vez por penal
+    // El arquero rival aprende si atajó un remate al centro. Queda guardado solo para este partido.
+    if (pateo && activaAprendizaje(pen.res, pen.cruce.x)) partido.arqueroAprendio = true;
     o.alPatear?.();
     const textos = { gol: '¡Gol!', atajada: pateo ? 'Atajó el arquero' : '¡Atajaste!', palo: '¡Palo!', afuera: 'Afuera' };
     mensaje(textos[pen.res], (pateo ? gol : !gol) ? 'bien' : 'mal');
@@ -204,6 +220,13 @@ export function crearTanda(cont, o) {
     const b = pen.pelota;
     if (!b.enJuego) return;
     let cuerpo = null;
+    if (b.atrapada) {
+      // Embolsada: la pelota acompaña las manos. Si se le escapa, la suelta un instante después.
+      const j = articulaciones(poseArquero(pen.arq, reloj));
+      b.x = (j.manoL.x + j.manoR.x) / 2; b.y = Math.max(CANCHA.RADIO_PELOTA, (j.manoL.y + j.manoR.y) / 2); b.z = CANCHA.Z_ARQUERO - 0.14;
+      if (b.retenida && reloj - pen.escurre.t > 0.3) escaparse(b);
+      else return;
+    }
     if (Math.abs(b.z - CANCHA.Z_ARQUERO) < 1) {
       const j = articulaciones(poseArquero(pen.arq, reloj));
       cuerpo = partes(j, pen.jAnt, DT);
@@ -306,7 +329,6 @@ export function crearTanda(cont, o) {
 
     // Arquero: de la pose a las articulaciones y de ahí a la pantalla
     const ja = articulaciones(poseArquero(pen.arq, reloj));
-    if (b.atrapada) { b.x = (ja.manoL.x + ja.manoR.x) / 2; b.y = Math.max(CANCHA.RADIO_PELOTA, (ja.manoL.y + ja.manoR.y) / 2); b.z = ZA - 0.14; }
     // Ejecutante
     const tau = pen.tCarrera === null ? -(reloj - pen.tInicio) - 0.01 : reloj - pen.tCarrera;
     const animoEj = pen.res ? (pen.res === 'gol' ? 'festeja' : 'lamenta') : null;
@@ -378,7 +400,7 @@ export function crearTanda(cont, o) {
   raf = requestAnimationFrame(bucle);
 
   // Para las pruebas automáticas: estado de solo lectura.
-  cont.firstElementChild.__penal = () => ({ cursor, hinchada: hinchada.id, fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
+  cont.firstElementChild.__penal = () => ({ ctl: { ...ctl, valores: [...ctl.valores] }, modoIA: pen?.modoIA, nivel: pen?.nivel, escurre: !!pen?.escurre, aprendio: !!partido.arqueroAprendio, cursor, hinchada: hinchada.id, fase: st.fase, reloj, pen, animo: st.animo, mios: st.mios, suyos: st.suyos });
 
   return function destruir() {
     destruido = true;
